@@ -1,8 +1,7 @@
 import discord
 import random
 import json
-import sqlite3
-import aiohttp
+import math
 from discord.ext.commands.cooldowns import BucketType
 from discord.ext import commands
 
@@ -19,9 +18,41 @@ class Economy(commands.Cog):
 
     async def cog_command_error(self, ctx, error):
         if isinstance(error, commands.errors.CommandOnCooldown):
-            await ctx.send(error)
+            embed = discord.Embed(
+                title="An Unexpected error occurred!",
+                colour=discord.Colour.from_rgb(255, 25, 15)
+            )
+            ret_aft = math.ceil(error.retry_after)
+            embed.add_field(
+                name="Error Message",
+                value=f"```tex\n$\nYou are on cooldown! Try again in {error.retry_after}\n$\n```",
+                inline=True
+            )
+            await ctx.send(embed=embed)
 
-    def get_prefix(bot, message):
+        else:
+            embed = discord.Embed(
+                title="An Unexpected error occurred!",
+                colour=discord.Colour.from_rgb(255, 25, 15)
+            )
+            embed.add_field(
+                name="Error Message",
+                value=f"```tex\n$\n{error.original}\n$\n```",
+                inline=True
+            )
+            embed.add_field(
+                name="info",
+                value="```tex\n$\nIf this occurs again, please join the support server and report this bug\n$\n```",
+                inline=True
+            )
+            embed.add_field(
+                name="Support Server",
+                value="https://discord.gg/jfwXdCZ",
+                inline=False
+            )
+            await ctx.send(embed=embed)
+
+    def get_prefix(self, message):
         with open("db_files/custom_prefix.json", "r") as f:
             l = json.load(f)
 
@@ -94,6 +125,13 @@ class Economy(commands.Cog):
                 money,
                 money
             )
+            embed = discord.Embed(
+                description=f"{SUCCESS} You did some inappropriate things with your body and earned ${money}!",
+                colour=SUCCESSFUL_COLOUR
+            )
+
+            await ctx.send(embed=embed)
+
         elif res is not None:
             query = """UPDATE currency SET (wit = ?, dep = ?, amount = ?) WHERE guild_id = ? AND user_id = ?"""
             res[0] += money
@@ -105,6 +143,13 @@ class Economy(commands.Cog):
                 ctx.guild.id,
                 ctx.author.id
             )
+            embed = discord.Embed(
+                description=f"{SUCCESS} You did some inappropriate things with your body and earned ${money}!",
+                colour=SUCCESSFUL_COLOUR
+            )
+
+            await ctx.send(embed=embed)
+
         else:
             owner = self.bot.get_user(self.bot.owner_id)
             await ctx.send("Hmmm.. There seems to be an error. My owner has been notified.")
@@ -113,13 +158,6 @@ class Economy(commands.Cog):
 
         self.bot.db.execute(query, val)
         self.bot.db.commit()
-
-        embed = discord.Embed(
-            description=f"{SUCCESS} You did some inappropriate things with your body and earned ${money}!",
-            colour=SUCCESSFUL_COLOUR
-        )
-
-        await ctx.send(embed=embed)
 
     @commands.command(aliases=["leaderboard"])
     async def top(self, ctx):
