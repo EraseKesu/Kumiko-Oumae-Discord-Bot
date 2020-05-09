@@ -15,7 +15,7 @@ UNSUCCESS = "<:redTick:596576672149667840>"
 class Economy(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-    """
+
     async def cog_command_error(self, ctx, error):
         if isinstance(error, commands.errors.CommandOnCooldown):
             embed = discord.Embed(
@@ -51,7 +51,7 @@ class Economy(commands.Cog):
                 inline=False
             )
             await ctx.send(embed=embed)
-    """
+
     def get_prefix(self, message):
         with open("db_files/custom_prefix.json", "r") as f:
             l = json.load(f)
