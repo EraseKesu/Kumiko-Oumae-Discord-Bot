@@ -440,24 +440,21 @@ class Moderation(commands.Cog):
         if msg is None:
             msg = "No reason"
 
-        qry = self.bot.cursor.execute(f"SELECT warns FROM warns WHERE guild_id = {ctx.guild.id} AND user_id = {member.id}")
-        res = list(qry.fetchone())
+        res = await self.bot.pool.fetchrow(f"SELECT warns FROM warns WHERE guild_id = {ctx.guild.id} AND user_id = {member.id}")
         if res is None:
-            q = "INSERT INTO warns(guild_id, user_id, warns) VALUES (?, ?, ?)"
-            val = (
-                ctx.guild.id,
-                member.id,
-                1
-            )
-            self.bot.db.execute(q, val)
-            self.bot.db.commit()
+            await self.bot.pool.execute("""INSERT INTO warns (guild_id, user_id, warns)
+                                           VALUES ($1, $2, $3)""",
+                                        ctx.guild.id,
+                                        member.id,
+                                        1
+                                        )
 
         if res is not None:
-            q = "UPDATE warns SET warns = ?"
-            res[0] += 1
-            val = res[0]
-            self.bot.db.execute(q, val)
-            self.bot.db.commit()
+            warns = res.get('warns') + 1
+            await self.bot.pool.execute("""UPDATE warns
+                                           SET warns = $1""",
+                                        warns
+                                        )
 
         embed = discord.Embed(
             title="Warn",
@@ -467,7 +464,7 @@ class Moderation(commands.Cog):
 
         embed.add_field(
             name="warns",
-            value=f"{res[0]}",
+            value=f"{res.get('warns')}",
             inline=False
         )
 
@@ -488,31 +485,34 @@ class Moderation(commands.Cog):
             await ctx.send("Please specify a member to warn")
             return
 
-        qry = self.bot.cursor.execute(f"SELECT warns FROM warns WHERE guild_id = {ctx.guild.id} AND user_id = {member.id}")
-        res = list(qry.fetchone())
+        res = await self.bot.pool.fetchrow(f"SELECT warns FROM warns WHERE guild_id = {ctx.guild.id} AND user_id = {member.id}")
         if res is None:
             await ctx.send("This member has no warns to be infracted!")
             return
 
         if res is not None:
-            q = "UPDATE warns SET warns = ?"
-            res[0] -= 1
-            val = res[0]
-            self.bot.db.execute(q, val)
-            self.bot.db.commit()
-
+            warns = res.get('warns') - 1
+            await self.bot.pool.execute("""UPDATE warns
+                                           SET warns = $1""",
+                                        warns
+                                        )
         await ctx.send(f"{member.mention}'s warn has been successfully infracted!")
 
     @commands.command()
     async def warnings(self, ctx, member: discord.Member):
-        qry = self.bot.cursor.execute(f"SELECT warns FROM warns WHERE guild_id = {ctx.guild.id} AND user_id = {member.id}")
-        res = list(qry.fetchone())
+        res = await self.bot.pool.fetchrow("""SELECT warns
+                                              FROM warns
+                                              WHERE guild_id = $1
+                                              AND user_id = $2""",
+                                           ctx.guild.id,
+                                           member.id
+                                           )
         if res is None:
             await ctx.send("This member has no warnings!")
             return
 
         if res is not None:
-            await ctx.send(f"{member.mention} has {res[0]} warns.")
+            await ctx.send(f"{member.mention} has {res.get('warns')} warns.")
             return
 
     @commands.command()
