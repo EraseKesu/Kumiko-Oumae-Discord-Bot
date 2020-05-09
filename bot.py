@@ -17,10 +17,10 @@ limitations under the License.
 import config
 import discord
 import smtplib
-import async_cleverbot as ac
 import asyncio
 import json
-import sqlite3
+import asyncpg
+from utils.db import Database
 from discord.ext import commands
 from psutil import Process
 from os import getpid
@@ -98,10 +98,12 @@ class MyContext(commands.Context):
 class MyBot(commands.Bot):
     def __init__(self):
         super().__init__(command_prefix=get_prefix)
-        self.db = sqlite3.connect("main.db")
-        self.cursor = self.db.cursor()
         languages = open("db_files/languages.json", "r")
         self.languages = json.load(languages)
+
+    async def _init(self):
+        pool = await Database.connect()
+        self.pool = pool.pool
 
     async def get_context(self, message, *, cls=MyContext):
         return await super().get_context(message, cls=cls)
@@ -163,13 +165,62 @@ async def ping(ctx):
     await pong.edit(content=f':ping_pong: Pong! ({delta} ms)\n*Discord WebSocket Latency: {round(bot.latency, 5)} ms*')
 
 
-@bot.command()
-async def ask(ctx, *, query: str):
-    member = ctx.author
-    await ctx.trigger_typing()
-    cleverbot = ac.Cleverbot("I$)-P8^&u/LZ<SDetSd.")
-    response = await cleverbot.ask(f"{query}", emotion=ac.Emotion.normal)
-    await ctx.send(f"> {query}\n{member.mention} {response.text}")
-    await cleverbot.close()
+async def run_bot():
+    # -- set up the bot's database and run the bot --
+
+    @bot.before_invoke
+    async def before_invoke(ctx):
+        # this is jank AF but i'll have to find a better way to hook into ctx
+        def send_message(channel_id, content, *, tts=False, embed=None, nonce=None, allowed_mentions=None):
+            r = discord.http.Route('POST', '/channels/{channel_id}/messages', channel_id=channel_id)
+            payload = {}
+
+            if content:
+                payload['content'] = content
+
+            if tts:
+                payload['tts'] = True
+
+            if embed:
+                payload['embed'] = embed
+
+            if nonce:
+                payload['nonce'] = nonce
+            else:
+                payload['nonce'] = str(ctx.author.id)
+
+            if allowed_mentions:
+                payload['allowed_mentions'] = allowed_mentions
+
+            return bot.http.request(r, json=payload)
+
+        bot.http.send_message = send_message
+
+    try:
+        bot.pool = await asyncpg.create_pool(user="postgres")
+    except (ConnectionError, asyncpg.exceptions.CannotConnectNowError):
+        bot.logger.critical("Could not connect to postgres.")
+
+    await bot.start(config.token)
+
+
+async def close_bot():
+    await bot.pool.close()
+    bot.logger.info("Closed postgres database connection.")
+    await bot.logout()
+    bot.logger.info("Logged out bot.")
+    await bot.session.close()
+    bot.logger.info("Closed aiohttp ClientSession.")
+    await bot.http._HTTPClient__session.close()
+    bot.logger.info("Closed internal bot ClientSession.")
+    for task in asyncio.all_tasks(loop=loop):
+        task.cancel()
+        bot.logger.info("Canceled a running task.")
+
+
+try:
+    loop.run_until_complete(run_bot())
+except KeyboardInterrupt:
+    loop.run_until_complete(close_bot())
 
 bot.run(config.token)
