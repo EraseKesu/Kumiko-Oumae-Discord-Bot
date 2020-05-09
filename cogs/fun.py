@@ -55,7 +55,7 @@ class Fun(commands.Cog):
     @commands.cooldown(1, 5, BucketType.user)
     async def candy(self, ctx):
 
-        embed = discord.Embed(description="🍬 | First one to take the candy gets the candy!", colour=0x0EF7E2)
+        embed = discord.Embed(description="🍬 | First one to take the candy gets it!", colour=0x0EF7E2)
         msg = await ctx.send(embed=embed)
         await msg.add_reaction("🍬")
 
@@ -64,7 +64,7 @@ class Fun(commands.Cog):
 
         msg0 = await self.bot.wait_for("reaction_add", check=check)
 
-        embed.description = f"🍬 | {msg0[1].mention} got and ate the candy!"
+        embed.description = f"🍬 | {msg0[1].mention} ate the candy!"
 
         await msg.edit(embed=embed)
 
