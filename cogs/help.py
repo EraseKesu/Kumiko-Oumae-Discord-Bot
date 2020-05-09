@@ -25,10 +25,11 @@ from discord.ext import commands, menus
 class HelpSource(menus.ListPageSource):
 
     async def format_page(self, menu, page):
+        url = "https://patreon.com/user?0=u&1=%3D&2=3&3=4&4=6&5=2&6=8&7=9&8=3&9=7&utm_medium=social&utm_source=twitter&utm_campaign=creatorshare"
         if isinstance(page, str):
             embed = discord.Embed(
                 title=f'Help| Type {get_prefix(bot=None, message=CTX)}setup to setup the server',
-                description="[Join our support server](https://discord.gg/YUm2sBD) | " + ''.join(page),
+                description=f"[Join our support server](https://discord.gg/YUm2sBD) | [Support us on Patreon!]({url})" + ''.join(page),
                 color=0xED791D
             )
             embed.set_thumbnail(
@@ -36,9 +37,10 @@ class HelpSource(menus.ListPageSource):
             )
             return embed
         else:
+
             embed = discord.Embed(
                 title=f'Help| Type {get_prefix(bot=None, message=CTX)}setup to setup the server',
-                description="[Join our support server](https://discord.gg/YUm2sBD) | " + '\n'.join(page),
+                description=f"[Join our support server](https://discord.gg/YUm2sBD) | [Support us on Patreon!]({url})" + '\n'.join(page),
                 color=0xED791D
             )
             embed.set_thumbnail(
@@ -144,10 +146,10 @@ class Help(commands.Cog):
             print(a.cog_name)
             if a.cog_name == "Fun":
                 if not a.hidden:
-                    fun += f"`{prefix}{a.name}` | "
+                    fun += f"`{prefix}{a.name}` ◍ "
                     try:
                         for b in a.commands:
-                            fun += f"`{prefix}{a.name} {b.name}` | "
+                            fun += f"`{prefix}{a.name} {b.name}` ◍ "
                     except:
                         pass
 
@@ -156,10 +158,10 @@ class Help(commands.Cog):
             print(a.cog_name)
             if a.cog_name == "Economy":
                 if not a.hidden:
-                    economy += f"`{prefix}{a.name}` | "
+                    economy += f"`{prefix}{a.name}` ◍ "
                     try:
                         for b in a.commands:
-                            economy += f"`{prefix}{a.name} {b.name}` | "
+                            economy += f"`{prefix}{a.name} {b.name}` ◍ "
                     except:
                         pass
 
@@ -168,10 +170,10 @@ class Help(commands.Cog):
         for a in self.bot.commands:
             if a.cog_name == "Music":
                 if not a.hidden:
-                    music += f"`{prefix}{a.name}` | "
+                    music += f"`{prefix}{a.name}` ◍ "
                     try:
                         for b in a.commands:
-                            music += f"`{prefix}{a.name} {b.name}` | "
+                            music += f"`{prefix}{a.name} {b.name}` ◍ "
                     except:
                         pass
 
@@ -180,10 +182,10 @@ class Help(commands.Cog):
         for a in self.bot.commands:
             if a.cog_name == "UserInfo":
                 if not a.hidden:
-                    userinfo += f"`{prefix}{a.name}` | "
+                    userinfo += f"`{prefix}{a.name}` ◍ "
                     try:
                         for b in a.commands:
-                            userinfo += f"`{prefix}{a.name} {b.name}` | "
+                            userinfo += f"`{prefix}{a.name} {b.name}` ◍ "
                     except:
                         pass
 
@@ -192,10 +194,10 @@ class Help(commands.Cog):
         for a in self.bot.commands:
             if a.cog_name == "Meta":
                 if not a.hidden:
-                    meta += f"`{prefix}{a.name}` | "
+                    meta += f"`{prefix}{a.name}` ◍ "
                     try:
                         for b in a.commands:
-                            meta += f"`{prefix}{a.name} {b.name}` | "
+                            meta += f"`{prefix}{a.name} {b.name}` ◍ "
                     except:
                         pass
 
@@ -204,10 +206,10 @@ class Help(commands.Cog):
         for a in self.bot.commands:
             if a.cog_name == "Moderation":
                 if not a.hidden:
-                    moderation += f"`{prefix}{a.name}` | "
+                    moderation += f"`{prefix}{a.name}` ◍ "
                     try:
                         for b in a.commands:
-                            moderation += f"`{prefix}{a.name} {b.name}` | "
+                            moderation += f"`{prefix}{a.name} {b.name}` ◍ "
                     except:
                         pass
 
@@ -216,10 +218,10 @@ class Help(commands.Cog):
         for a in self.bot.commands:
             if a.cog_name == "Custom":
                 if not a.hidden:
-                    custom += f"`{prefix}{a.name}` | "
+                    custom += f"`{prefix}{a.name}` ◍ "
                     try:
                         for b in a.commands:
-                            custom += f"`{prefix}{a.name} {b.name}` | "
+                            custom += f"`{prefix}{a.name} {b.name}` ◍ "
                     except:
                         pass
 
@@ -228,10 +230,10 @@ class Help(commands.Cog):
         for a in self.bot.commands:
             if a.cog_name == "Images":
                 if not a.hidden:
-                    image += f"`{a.name}` | "
+                    image += f"`{a.name}` ◍ "
                     try:
                         for b in a.commands:
-                            image += f"`{prefix}{a.name} {b.name}` | "
+                            image += f"`{prefix}{a.name} {b.name}` ◍ "
                     except:
                         pass
 
@@ -240,10 +242,10 @@ class Help(commands.Cog):
         for a in self.bot.commands:
             if a.cog_name == "Lockdown":
                 if not a.hidden:
-                    lockdown += f"`{prefix}{a.name}` | "
+                    lockdown += f"`{prefix}{a.name}` ◍ "
                     try:
                         for b in a.commands:
-                            lockdown += f"`{prefix}{a.name} {b.name}` | "
+                            lockdown += f"`{prefix}{a.name} {b.name}` ◍ "
                     except:
                         pass
 
@@ -252,22 +254,10 @@ class Help(commands.Cog):
         for a in self.bot.commands:
             if a.cog_name == "Translate":
                 if not a.hidden:
-                    translator += f"`{prefix}{a.name}` | "
+                    translator += f"`{prefix}{a.name}` ◍ "
                     try:
                         for b in a.commands:
-                            translator += f"`{prefix}{a.name} {b.name}` | "
-                    except:
-                        pass
-
-        leveling = ""
-
-        for a in self.bot.commands:
-            if a.cog_name == "Leveling":
-                if not a.hidden:
-                    leveling += f"`{prefix}{a.name}` | "
-                    try:
-                        for b in a.commands:
-                            leveling += f"`{prefix}{a.name} {b.name}` | "
+                            translator += f"`{prefix}{a.name} {b.name}` ◍ "
                     except:
                         pass
 
@@ -317,16 +307,10 @@ class Help(commands.Cog):
 
             """,
                              f"""
-            **LEVELING**
-            {leveling}
-
-            """,
-                             f"""
             **CUSTOM**
             {custom}
 
         """]
-        print(fun)
 
         source = HelpSource(fdescriptions, per_page=2)
         menu = menus.MenuPages(source)
