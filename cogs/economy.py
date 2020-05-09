@@ -15,7 +15,7 @@ UNSUCCESS = "<:redTick:596576672149667840>"
 class Economy(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-
+    """
     async def cog_command_error(self, ctx, error):
         if isinstance(error, commands.errors.CommandOnCooldown):
             embed = discord.Embed(
@@ -51,7 +51,7 @@ class Economy(commands.Cog):
                 inline=False
             )
             await ctx.send(embed=embed)
-
+    """
     def get_prefix(self, message):
         with open("db_files/custom_prefix.json", "r") as f:
             l = json.load(f)
@@ -68,38 +68,31 @@ class Economy(commands.Cog):
     @commands.cooldown(1, 3600, BucketType.user)
     async def work(self, ctx):
             money = random.randint(100, 300)
-            qry = self.bot.cursor.execute(f"SELECT wit, dep, amount FROM currency WHERE guild_id = {ctx.guild.id} AND user_id = {ctx.author.id};")
-            res = list(qry.fetchone())
+            res = await self.bot.pool.fetchrow("""SELECT wit, dep, amount
+                                                  FROM currency
+                                                  WHERE guild_id = $1
+                                                  AND user_id = $2""",
+                                                  ctx.guild.id,
+                                                  ctx.author.id
+                                               )
             if res is None:
-                query = """INSERT INTO currency (guild_id, user_id, dep, wit, amount)
-    VALUES (?, ?, ?, ?, ?)
-                """
-                val = (
-                    ctx.guild.id,
-                    ctx.author.id,
-                    0,
-                    money,
-                    money
-                )
+                await self.bot.pool.execute("""INSERT INTO currency (guild_id, user_id, dep, wit, amount)
+                           VALUES ($1, $2, $3, $4, $5)
+                        """, ctx.guild.id, ctx.author.id, 0, money, money)
             elif res is not None:
-                query = """UPDATE currency SET wit = ?, dep = ?, amount = ? WHERE guild_id = ? AND user_id = ?"""
-                res[0] += money
-                res[2] = res[0] + res[1]
-                val = (
-                    res[0],
-                    res[1],
-                    res[2],
-                    ctx.guild.id,
-                    ctx.author.id
-                )
+                wit = res.get('wit')
+                dep = res.get('dep')
+                wit += money
+                amount = wit + dep
+                await self.bot.pool.execute("""UPDATE currency
+                           SET wit = $1, dep = $2, amount = $3
+                           WHERE guild_id = $4
+                           AND user_id = $5""", wit, dep, amount, ctx.guild.id, ctx.author.id)
             else:
                 owner = self.bot.get_user(self.bot.owner_id)
                 await ctx.send("Hmmm.. There seems to be an error. My owner has been notified.")
                 await owner.send("There's an error with the `work` command. Probably a database error btw..")
                 return
-
-            self.bot.db.execute(query, val)
-            self.bot.db.commit()
 
             embed = discord.Embed(
                 description=f"{SUCCESS} Your hard work pays off! You earned ${money}",
@@ -111,60 +104,49 @@ class Economy(commands.Cog):
     @commands.command()
     @commands.cooldown(1, 3600, BucketType.user)
     async def slut(self, ctx):
-        money = random.randint(100, 400)
-        qry = self.bot.cursor.execute(f"SELECT (wit, dep, amount) FROM currency WHERE guild_id = {ctx.guild.id} AND user_id = {ctx.author.id}")
-        res = list(qry.fetchone())
+        money = random.randint(100, 300)
+        res = await self.bot.pool.fetchrow("""SELECT wit, dep, amount
+                                                          FROM currency
+                                                          WHERE guild_id = $1
+                                                          AND user_id = $2""",
+                                           ctx.guild.id,
+                                           ctx.author.id
+                                           )
         if res is None:
-            query = """INSERT INTO currency (guild_id, user_id, dep, wit, amount)
-        VALUES (?, ?, ?, ?, ?)
-                    """
-            val = (
-                ctx.guild.id,
-                ctx.author.id,
-                0,
-                money,
-                money
-            )
-            embed = discord.Embed(
-                description=f"{SUCCESS} You did some inappropriate things with your body and earned ${money}!",
-                colour=SUCCESSFUL_COLOUR
-            )
-
-            await ctx.send(embed=embed)
-
+            await self.bot.pool.execute("""INSERT INTO currency (guild_id, user_id, dep, wit, amount)
+                                   VALUES ($1, $2, $3, $4, $5)
+                                """, ctx.guild.id, ctx.author.id, 0, money, money)
         elif res is not None:
-            query = """UPDATE currency SET (wit = ?, dep = ?, amount = ?) WHERE guild_id = ? AND user_id = ?"""
-            res[0] += money
-            res[2] = res[0] + res[1]
-            val = (
-                res[0],
-                res[1],
-                res[2],
-                ctx.guild.id,
-                ctx.author.id
-            )
-            embed = discord.Embed(
-                description=f"{SUCCESS} You did some inappropriate things with your body and earned ${money}!",
-                colour=SUCCESSFUL_COLOUR
-            )
-
-            await ctx.send(embed=embed)
-
+            wit = res.get('wit')
+            dep = res.get('dep')
+            wit += money
+            amount = wit + dep
+            await self.bot.pool.execute("""UPDATE currency
+                                   SET wit = $1, dep = $2, amount = $3
+                                   WHERE guild_id = $4
+                                   AND user_id = $5""", wit, dep, amount, ctx.guild.id, ctx.author.id)
         else:
             owner = self.bot.get_user(self.bot.owner_id)
             await ctx.send("Hmmm.. There seems to be an error. My owner has been notified.")
             await owner.send("There's an error with the `slut` command. Probably a database error btw..")
             return
 
-        self.bot.db.execute(query, val)
-        self.bot.db.commit()
+        embed = discord.Embed(
+            description=f"{SUCCESS} You did what strippers do and earned ${money}!",
+            colour=SUCCESSFUL_COLOUR
+        )
+
+        await ctx.send(embed=embed)
 
     @commands.command(aliases=["leaderboard"])
     async def top(self, ctx):
-        x = 0
-        qry = self.bot.cursor.execute(f"""SELECT amount FROM currency WHERE guild_id = {ctx.guild.id} AND user_id = {ctx.author.id}""")
-        res = list(qry.fetchone())
-        lb = sorted(res, key=lambda x: res, reverse=True)
+        lb = await self.bot.pool.fetch(f"""SELECT amount
+                                          FROM currency
+                                          WHERE guild_id = $1
+                                          ORDER BY amount DESC
+                                          LIMIT 10""",
+                                          ctx.guild.id
+                                          )
         res = ""
 
         counter = 0
@@ -172,18 +154,18 @@ class Economy(commands.Cog):
         for a in lb:
 
             counter += 1
+            print(counter)
 
             if counter > 10:
 
                 pass
 
             else:
-                res1 = self.bot.cursor.execute(f"SELECT user_id FROM currency WHERE guild_id = {ctx.guild.id}")
-                u = self.bot.get_user(res1[x])
-                res += f"\n**{counter}.** `{u}` - **{res[0]} $**"
-                x += 1
-                if x == len(res1):
-                    break
+                res1 = await self.bot.pool.fetchval(f"SELECT user_id FROM currency WHERE guild_id = {ctx.guild.id}", column=counter-1)
+                u = self.bot.get_user(res1)
+                lb[0] = str(lb[0])
+                lb[0] = lb[0].strip("<Record amount=>")
+                res += f"\n**{counter}.** `{u}` - **{lb[0]} $**"
 
         embed = discord.Embed(
             description=res,
@@ -199,35 +181,39 @@ class Economy(commands.Cog):
     @commands.cooldown(1, 3600, BucketType.user)
     async def crime(self, ctx):
         chance = random.choice(["yes", "yes", "yes", "yes", "yes", "no", "yes", "no", "yes", "no"])
-        qry = self.bot.cursor.execute(
-            f"SELECT wit, dep, amount FROM currency WHERE guild_id = {ctx.guild.id} AND user_id = {ctx.author.id}")
-        res = list(qry.fetchone())
+        res = await self.bot.pool.fetchrow("""SELECT wit, dep, amount
+                                        FROM currency
+                                        WHERE guild_id = $1
+                                        AND user_id = $2""",
+                                     ctx.guild.id,
+                                     ctx.author.id
+                                     )
         if res is None:
             await ctx.send(
                 f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{self.get_prefix(ctx)}work` to start working!"
             )
             return
-        if int(res[0]) < 350:
+        if int(res.get('wit')) < 350:
             await ctx.send(f"You do not have at least 350 on you! `{self.get_prefix(ctx)}withdraw`some money from your bank.")
             return
         if chance == "yes":
             money = random.randint(100, 400)
 
             if res is not None:
-                q = "UPDATE currency SET wit = ?, dep = ?, amount = ? WHERE guild_id = ? AND user_id = ?"
-                wit = res[0] + money
-                dep = res[1]
-                amount = wit + dep
-                val = (
-                    wit,
-                    dep,
-                    amount,
-                    ctx.guild.id,
-                    ctx.author.id
-                )
-                self.bot.db.execute(q, val)
-                self.bot.db.commit()
 
+                wit = res.get('wit') + money
+                dep = res.get('dep')
+                amount = wit + dep
+                await self.bot.pool.execute("""UPDATE currency
+                                               SET wit = $1, dep = $2, amount = $3
+                                               WHERE guild_id = $4
+                                               AND user_id = $5""",
+                                            wit,
+                                            dep,
+                                            amount,
+                                            ctx.guild.id,
+                                            ctx.author.id
+                                            )
             embed = discord.Embed(
                 description=f"{SUCCESS} You successfully committed a crime and earned ${money}!",
                 colour=SUCCESSFUL_COLOUR
@@ -240,19 +226,19 @@ class Economy(commands.Cog):
             money = random.randint(100, 400)
 
             if res is not None:
-                q = "UPDATE currency SET wit = ?, dep = ?, amount = ? WHERE guild_id = ? AND user_id = ?"
-                wit = res[0] - money
-                dep = res[1]
+                wit = res.get('wit') - money
+                dep = res.get('dep')
                 amount = wit + dep
-                val = (
-                    wit,
-                    dep,
-                    amount,
-                    ctx.guild.id,
-                    ctx.author.id
-                )
-                self.bot.db.execute(q, val)
-                self.bot.db.commit()
+                await self.bot.pool.execute("""UPDATE currency
+                                               SET wit = $1, dep = $2, amount = $3
+                                               WHERE guild_id = $4
+                                               AND user_id = $5""",
+                                            wit,
+                                            dep,
+                                            amount,
+                                            ctx.guild.id,
+                                            ctx.author.id
+                                            )
 
             embed=discord.Embed(
                 description=f"{UNSUCCESS} You were caught committing a crime and was charged ${money}!",
@@ -266,24 +252,30 @@ class Economy(commands.Cog):
     @commands.cooldown(1, 3600, BucketType.user)
     async def beg(self, ctx):
         chance = random.choice(["yes", "yes", "yes", "yes", "yes", "no", "yes", "no", "yes", "no"])
-        qry = self.bot.cursor.execute(
-            f"SELECT wit, dep, amount FROM currency WHERE guild_id = {ctx.guild.id} AND user_id = {ctx.author.id}")
-        res = list(qry.fetchone())
+        res = await self.bot.pool.fetchrow("""SELECT wit, dep, amount
+                                               FROM currency
+                                               WHERE guild_id = $1
+                                               AND user_id = $2""",
+                                           ctx.guild.id,
+                                           ctx.author.id
+                                           )
         if chance == "yes":
             money = random.randint(1, 100)
 
             if res is not None:
-                q = "UPDATE currency SET wit = ?, dep = ?, amount = ? WHERE guild_id = ? AND user_id = ?"
-                wit = res[0] + money
-                dep = res[1]
+                wit = res.get('wit') + money
+                dep = res.get('dep')
                 amount = wit + dep
-                val = (
-                    wit,
-                    dep,
-                    amount,
-                    ctx.guild.id,
-                    ctx.author.id
-                )
+                await self.bot.pool.execute("""UPDATE currency
+                                               SET wit = $1, dep = $2, amount = $3
+                                               WHERE guild_id = $4
+                                               AND user_id = $5""",
+                                            wit,
+                                            dep,
+                                            amount,
+                                            ctx.guild.id,
+                                            ctx.author.id
+                                            )
 
             embed = discord.Embed(
                 description=f"{SUCCESS} You successfully committed a crime and earned ${money}!",
@@ -293,19 +285,16 @@ class Economy(commands.Cog):
             await ctx.send(embed=embed)
 
             if res is None:
-                    q = """INSERT INTO currency (guild_id, user_id, dep, wit, amount)
-                VALUES (?, ?, ?, ?, ?)
-                            """
-                    val = (
-                        ctx.guild.id,
-                        ctx.author.id,
-                        0,
-                        money,
-                        money
-                    )
+                await self.bot.pool.execute("""INSERT INTO currency guild_id, user_id, dep, wit, amount
+                                                   VALUES ($1, $2, $3, $4 ,$5)
+                                            """,
+                                            ctx.guild.id,
+                                            ctx.author.id,
+                                            0,
+                                            money,
+                                            money
+                                            )
 
-            self.bot.db.execute(q, val)
-            self.bot.db.commit()
             return
 
         if chance == "no":
@@ -320,16 +309,23 @@ class Economy(commands.Cog):
     @commands.command()
     @commands.cooldown(1, 3600, BucketType.user)
     async def rob(self, ctx, member: discord.Member):
+        if member.id == ctx.author.id:
+            await ctx.send("Sorry, you cannot rob yourself!")
+            return
         chance = random.choice(["yes", "yes", "yes", "yes", "yes", "no", "yes", "no", "yes", "no"])
-        qry = self.bot.cursor.execute(
-            f"SELECT wit, dep, amount FROM currency WHERE guild_id = {ctx.guild.id} AND user_id = {ctx.author.id}")
-        res = qry.fetchone
+        res = await self.bot.pool.fetchrow("""SELECT wit, dep, amount
+                                              FROM currency
+                                              WHERE guild_id = $1
+                                              AND user_id = $2""",
+                                           ctx.guild.id,
+                                           ctx.author.id
+                                           )
         if res is None:
             await ctx.send(
                 f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{self.get_prefix(ctx)}work` to start working!"
             )
             return
-        if int(res[0]) < 350:
+        if res.get('wit') < 350:
             await ctx.send(
                 f"You do not have at least 350 on you! `{self.get_prefix(ctx)}withdraw`some money from your bank.")
             return
@@ -337,33 +333,40 @@ class Economy(commands.Cog):
             money = random.randint(100, 400)
 
             if res is not None:
-                q = "UPDATE currency SET wit = ?, dep = ?, amount = ? WHERE guild_id = ? AND user_id = ?"
-                wit = res[0] + money
-                dep = res[1]
+                wit = res.get('wit') + money
+                dep = res.get('dep')
                 amount = wit + dep
-                val = (
-                    wit,
-                    dep,
-                    amount,
-                    ctx.guild.id,
-                    ctx.author.id
-                )
-                self.bot.db.execute(q, val)
-                self.bot.db.commit()
-                q = "UPDATE currency SET wit = ?, dep = ?, amount = ? WHERE guild_id = ? AND user_id = ?"
-                wit = res[0] - money
-                dep = res[1]
-                amount = wit + dep
-                val = (
-                    wit,
-                    dep,
-                    amount,
-                    ctx.guild.id,
-                    member.id
-                )
-                self.bot.db.execute(q, val)
-                self.bot.db.commit()
+                await self.bot.pool.fetchrow("""UPDATE currency
+                                                SET wit = $1, dep = $2, amount = $3
+                                                WHERE guild_id = $4
+                                                AND user_id = $5""",
+                                             wit,
+                                             dep,
+                                             amount,
+                                             ctx.guild.id,
+                                             ctx.author.id
+                                             )
+                res = await self.bot.pool.fetchrow("""SELECT wit, dep, amount
+                                                              FROM currency
+                                                              WHERE guild_id = $1
+                                                              AND user_id = $2""",
+                                                   ctx.guild.id,
+                                                   member.id
+                                                   )
 
+                wit = res.get('wit') - money
+                dep = res.get('dep')
+                amount = wit + dep
+                await self.bot.pool.execute("""UPDATE currency
+                                               SET wit = $1, dep = $2, amount = $3
+                                               WHERE guild_id = $4
+                                               AND user_id = $5""",
+                                            wit,
+                                            dep,
+                                            amount,
+                                            ctx.guild.id,
+                                            member.id
+                                            )
             embed = discord.Embed(
                 description=f"{SUCCESS} You successfully robbed {member.mention} for ${money}!",
                 colour=SUCCESSFUL_COLOUR
@@ -376,20 +379,20 @@ class Economy(commands.Cog):
             money = random.randint(100, 400)
 
             if res is not None:
-                q = "UPDATE currency SET wit = ?, dep = ?, amount = ? WHERE guild_id = ? AND user_id = ?"
-                wit = res[0] - money
-                dep = res[1]
-                amount = wit + dep
-                val = (
-                    wit,
-                    dep,
-                    amount,
-                    ctx.guild.id,
-                    ctx.author.id
-                )
-                self.bot.db.execute(q, val)
-                self.bot.db.commit()
 
+                wit = res.get('wit') - money
+                dep = res.get('dep')
+                amount = wit + dep
+                await self.bot.pool.execute("""UPDATE currency
+                                               SET wit = $1, dep = $2, amount = $3
+                                               WHERE guild_id = $4
+                                               AND user_id = $5""",
+                                            wit,
+                                            dep,
+                                            amount,
+                                            ctx.guild.id,
+                                            ctx.author.id
+                                            )
             embed = discord.Embed(
                 description=f"{UNSUCCESS} You were caught robbing {member.mention} and was charged ${money}!",
                 colour=UNSUCCESSFUL_COLOUR
@@ -400,79 +403,95 @@ class Economy(commands.Cog):
 
     @commands.command(hidden=True)
     @commands.is_owner()
-    async def add(self, ctx, member: discord.Member, amount: int):
-        qry = self.bot.cursor.execute(
-            f"SELECT wit, dep, amount FROM currency WHERE guild_id = {ctx.guild.id} AND user_id = {member.id}"
+    async def add(self, ctx, member: discord.Member, money: int):
+        res = await self.bot.pool.fetchrow("""SELECT wit, dep, amount 
+                                              FROM currency
+                                              WHERE guild_id = $1
+                                              AND user_id = $2""",
+                                           ctx.guild.id,
+                                           member.id
         )
-        res = list(qry.fetchone())
         if res is not None:
-            q = f"UPDATE currency SET wit = ?, dep = ?, amount = ? WHERE guild_id = ? AND user_id = ?"
-            res[1] += amount
-            res[2] = res[0] + res[1]
-            val = (
-                res[0],
-                res[1],
-                res[2],
-                ctx.guild.id,
-                member.id
-            )
-            self.bot.db.execute(q, val)
-            self.bot.commit()
-            await ctx.send(f"{member.mention}'s balance has been increased by {amount}")
+            wit = res.get('wit') + money
+            dep = res.get('dep')
+            amount = wit + dep
+            await self.bot.pool.execute("""UPDATE currency
+                                           SET wit = $1, dep = $2, amount = $3
+                                           WHERE guild_id = $4
+                                           AND user_id = $5""",
+                                        wit,
+                                        dep,
+                                        amount,
+                                        ctx.guild.id,
+                                        member.id
+                                        )
+            await ctx.send(f"{member.mention}'s balance has been increased by {money}")
             return
 
         if res is None:
-            q = """INSERT INTO currency (guild_id, user_id, dep, wit, amount)
-                            VALUES (?, ?, ?, ?, ?)
-                                        """
-            val = (
-                ctx.guild.id,
-                ctx.author.id,
-                amount,
-                0,
-                amount
-            )
-            self.bot.db.execute(q, val)
-            self.bot.db.commit()
+            dep = res.get('dep')
+            await self.bot.pool.execute("""INSERT INTO currency (guild_id, user_id, dep, wit, amount)
+                                     VALUES ($1, $2, $3, $4, $5)""",
+                                  ctx.guild.id,
+                                  member.id,
+                                  dep,
+                                  money,
+                                  money
+                                  )
             return
 
     @commands.command(hidden=True, aliases=["rmv"])
     @commands.is_owner()
-    async def _remove(self, ctx, member: discord.Member, amount: int):
-        qry = self.bot.cursor.execute(
-            f"SELECT wit, dep, amount FROM currency WHERE guild_id = {ctx.guild.id} AND user_id = {member.id}"
-        )
-        res = list(qry.fetchone())
+    async def _remove(self, ctx, member: discord.Member, money: int):
+        res = await self.bot.pool.fetchrow("""SELECT wit, dep, amount 
+                                                      FROM currency
+                                                      WHERE guild_id = $1
+                                                      AND user_id = $2""",
+                                           ctx.guild.id,
+                                           member.id
+                                           )
         if res is not None:
-            q = f"UPDATE currency SET wit = ?, dep = ?, amount = ? WHERE guild_id = ? AND user_id = ?"
-            res[1] -= amount
-            res[2] = res[0] + res[1]
-            val = (
-                res[0],
-                res[1],
-                res[2],
-                ctx.guild.id,
-                member.id
-            )
-            self.bot.db.execute(q, val)
-            self.bot.db.commit()
+            wit = res.get('wit') - money
+            dep = res.get('dep')
+            amount = wit + dep
+            await self.bot.pool.execute("""UPDATE currency
+                                                   SET wit = $1, dep = $2, amount = $3
+                                                   WHERE guild_id = $4
+                                                   AND user_id = $5""",
+                                        wit,
+                                        dep,
+                                        amount,
+                                        ctx.guild.id,
+                                        member.id
+                                        )
+            await ctx.send(f"{member.mention}'s balance has been decreased by {money}")
             return
 
         if res is None:
-            await ctx.send("This user doesn't have an account!")
-
-        await ctx.send(f"{member.mention}'s balance has been decreased by {amount}")
-        return
+            dep = res.get('dep')
+            await self.bot.pool.execute("""INSERT INTO currency (guild_id, user_id, dep, wit, amount)
+                                             VALUES ($1, $2, $3, $4, $5)""",
+                                        ctx.guild.id,
+                                        member.id,
+                                        dep,
+                                        money,
+                                        money
+                                        )
+            return
 
     @commands.command(aliases=["bal"])
     async def balance(self, ctx):
-        get_pref = self.get_prefix(self.bot, ctx)
-        qry = self.bot.cursor.execute(
-            f"SELECT wit, dep, amount FROM currency WHERE guild_id = {ctx.guild.id} AND user_id = {ctx.author.id}")
-        res = qry.fetchone
+        get_pref = self.get_prefix(ctx)
+        res = await self.bot.pool.fetchrow("""SELECT wit, dep, amount
+                                        FROM currency 
+                                        HERE guild_id = $1
+                                        AND user_id = $2""",
+                                     ctx.guild.id,
+                                     ctx.author.id
+                                     )
         if res is None:
             await ctx.send(
-                f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{get_pref[1]}work` to start working!"
+                f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{get_pref}work` to start working!"
             )
             return
 
@@ -482,17 +501,17 @@ class Economy(commands.Cog):
         )
         embed.add_field(
             name="In bank:",
-            value=f"`{res[1]}`",
+            value=f"`{res.get('dep')}`",
             inline=False
         )
         embed.add_field(
             name="On you:",
-            value=f"`{res[0]}`",
+            value=f"`{res.get('wit')}`",
             inline=False
         )
         embed.add_field(
             name="Total:",
-            value=f"`{res[2]}`",
+            value=f"`{res.get('amount')}`",
             inline=False
         )
         embed.set_footer(
@@ -505,46 +524,53 @@ class Economy(commands.Cog):
 
     @commands.command(aliases=["with"])
     async def withdraw(self, ctx, amount):
-        get_pref = self.get_prefix(self.bot, ctx)
+        get_pref = self.get_prefix(ctx)
         if amount == "":
             await ctx.send("Please specify an amount to withdraw!")
             return
-        qry = self.bot.db.execute(
-            f"SELECT wit, dep, amount FROM currency WHERE guild_id = {ctx.guild.id} AND user_id = {ctx.author.id}")
-        res = list(qry.fetchone())
+        res = await self.bot.pool.fetchrow("""SELECT wit, dep, amount
+                                        FROM currency
+                                        WHERE guild_id = $1
+                                        AND user_id = $2""",
+                                           ctx.guild.id,
+                                           ctx.author.id
+                                           )
         if res is None:
             await ctx.send(
-                f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{get_pref[1]}work` to start working!"
+                f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{get_pref}work` to start working!"
             )
             return
         if res is not None:
-            q = "UPDATE currency SET wit = ?, dep = ?, amount = ? WHERE guild_id = ? AND user_id = ?"
+            wit = res.get('wit') + amount
+            dep = res.get('dep') - amount
+            tot = dep + wit
+            if dep <= 0:
+                await ctx.send("Sorry, you cannot withdraw more than your balance!")
+                return
+            await self.bot.pool.execute("""UPDATE currency
+                                           SET wit = $1, dep = $2, amount = $3
+                                           WHERE guild_id = $4
+                                           AND user_id = $5""",
+                                        wit,
+                                        dep,
+                                        tot,
+                                        ctx.guild.id,
+                                        ctx.author.id
+                                        )
             if amount == "all":
-                res[0] += res[1]
-                res[1] = 0
-                res[2] = res[0]
-                val = (
-                    res[0],
-                    res[1],
-                    res[1],
-                    ctx.guild.id,
-                    ctx.author.id
-                )
-                self.bot.db.execute(q, val)
-                self.bot.db.commit()
-            else:
-                res[0] += int(amount)
-                res[1] -= int(amount)
-                res[2] = res[0] + res[1]
-                val = (
-                    res[0],
-                    res[1],
-                    res[1],
-                    ctx.guild.id,
-                    ctx.author.id
-                )
-                self.bot.db.execute(q, val)
-                self.bot.db.commit()
+                wit = res.get('wit') + res.get('dep')
+                dep = res.get('wit') - res.get('dep')
+                tot = wit + dep
+                await self.bot.pool.execute("""UPDATE currency
+                                                           SET wit = $1, dep = $2, amount = $3
+                                                           WHERE guild_id = $4
+                                                           AND user_id = $5""",
+                                            wit,
+                                            dep,
+                                            tot,
+                                            ctx.guild.id,
+                                            ctx.author.id
+                                            )
 
         embed = discord.Embed(
             title="Balance",
@@ -552,17 +578,17 @@ class Economy(commands.Cog):
         )
         embed.add_field(
             name="In bank:",
-            value=f"`{res[1]}`",
+            value=f"`{res.get('dep')}`",
             inline=False
         )
         embed.add_field(
             name="On you:",
-            value=f"`{res[0]}`",
+            value=f"`{res.get('wit')}`",
             inline=False
         )
         embed.add_field(
             name="Total:",
-            value=f"`{res[2]}`",
+            value=f"`{res.get('amount')}`",
             inline=False
         )
 
@@ -574,42 +600,49 @@ class Economy(commands.Cog):
         if amount == "":
             await ctx.send("Please specify an amount to deposit!")
             return
-        qry = self.bot.cursor.execute(
-            f"SELECT wit, dep, amount FROM currency WHERE guild_id = {ctx.guild.id} AND user_id = {ctx.author.id}")
-        res = list(qry.fetchone())
+        res = await self.bot.pool.fetchrow("""SELECT wit, dep, amount
+                                                FROM currency
+                                                WHERE guild_id = $1
+                                                AND user_id = $2""",
+                                           ctx.guild.id,
+                                           ctx.author.id
+                                           )
         if res is None:
             await ctx.send(
                 f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{self.get_prefix(ctx)}work` to start working!"
             )
             return
         if res is not None:
-            q = "UPDATE currency SET wit = ?, dep = ?, amount = ? WHERE guild_id = ? AND user_id = ?"
+            wit = res.get('wit') - amount
+            dep = res.get('dep') + amount
+            tot = dep + wit
+            if wit <= 0:
+                await ctx.send("Sorry, you cannot deposit more than you have on you!")
+                return
+            await self.bot.pool.execute("""UPDATE currency
+                                                   SET wit = $1, dep = $2, amount = $3
+                                                   WHERE guild_id = $4
+                                                   AND user_id = $5""",
+                                        wit,
+                                        dep,
+                                        tot,
+                                        ctx.guild.id,
+                                        ctx.author.id
+                                        )
             if amount == "all":
-                res[1] += res[0]
-                res[0] = 0
-                res[2] = res[0] + res[1]
-                val = (
-                    res[0],
-                    res[1],
-                    res[1],
-                    ctx.guild.id,
-                    ctx.author.id
-                )
-                self.bot.db.execute(q, val)
-                self.bot.db.commit()
-            else:
-                res[0] -= int(amount)
-                res[1] += int(amount)
-                res[2] = res[0] + res[1]
-                val = (
-                    res[0],
-                    res[1],
-                    res[1],
-                    ctx.guild.id,
-                    ctx.author.id
-                )
-                self.bot.db.execute(q, val)
-                self.bot.db.commit()
+                wit = res.get('wit') - res.get('dep')
+                dep = res.get('wit') + res.get('dep')
+                tot = wit + dep
+                await self.bot.pool.execute("""UPDATE currency
+                                                                   SET wit = $1, dep = $2, amount = $3
+                                                                   WHERE guild_id = $4
+                                                                   AND user_id = $5""",
+                                            wit,
+                                            dep,
+                                            tot,
+                                            ctx.guild.id,
+                                            ctx.author.id
+                                            )
 
         embed = discord.Embed(
             title="Balance",
@@ -617,17 +650,17 @@ class Economy(commands.Cog):
         )
         embed.add_field(
             name="In bank:",
-            value=f"`{res[1]}`",
+            value=f"`{res.get('dep')}`",
             inline=False
         )
         embed.add_field(
             name="On you:",
-            value=f"`{res[0]}`",
+            value=f"`{res.get('wit')}`",
             inline=False
         )
         embed.add_field(
             name="Total:",
-            value=f"`{res[2]}`",
+            value=f"`{res.get('amount')}`",
             inline=False
         )
 
@@ -641,9 +674,13 @@ class Economy(commands.Cog):
         if amount is None:
             await ctx.send("Please specify an amount to give!")
 
-        qry = self.bot.cursor.execute(
-            f"SELECT wit, dep, amount FROM currency WHERE guild_id = {ctx.guild.id} AND user_id = {ctx.author.id}")
-        res = list(qry.fetchone())
+        res = await self.bot.pool.fetchrow("""SELECT wit, dep, amount
+                                              FROM currency
+                                              WHERE guild_id = $1
+                                              AND user_id = $2""",
+                                           ctx.guild.id,
+                                           ctx.author.id
+                                           )
         if res is None:
             await ctx.send(
                 f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{self.get_prefix(ctx)}work` to start working!"
@@ -655,40 +692,47 @@ class Economy(commands.Cog):
                     f"Sorry, you do not have enough money on you! simply type in `{self.get_prefix(ctx)}withdraw {int(amount)}`"
                 )
                 return
-            q = "UPDATE currency SET wit = ?, dep = ?, amount = ? WHERE guild_id = ? AND user_id = ?"
-            res[0] -= int(amount)
-            res[2] = res[0] + res[1]
-            val = (
-                res[0],
-                res[1],
-                res[1],
-                ctx.guild.id,
-                ctx.author.id
-            )
-            self.bot.db.execute(q, val)
-            self.bot.db.commit()
 
-        qry = self.bot.cursor.execute(
-            f"SELECT wit, dep, amount FROM currency WHERE guild_id = {ctx.guild.id} AND user_id = {ctx.author.id}")
-        res = list(qry.fetchone())
+            wit = res.get('wit') - int(amount)
+            dep = res.get('dep')
+            tot = res.get('amount')
+            await self.bot.pool.execute("""UPDATE currency
+                                           SET wit = $1, dep = $2, amount = $3
+                                           WHERE guild_id = $4
+                                           AND user_id = $5""",
+                                        wit,
+                                        dep,
+                                        tot,
+                                        ctx.guild.id,
+                                        ctx.author.id
+                                        )
+        res = await self.bot.pool.fetchrow("""SELECT wit, dep, amount
+                                               FROM currency
+                                               WHERE guild_id = $1
+                                               AND user_id = $2""",
+                                           ctx.guild.id,
+                                           member.id
+                                           )
         if res is None:
             await ctx.send(
                 f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{self.get_prefix(ctx)}work` to start working!"
             )
             return
         if res is not None:
-            q = "UPDATE currency SET wit = ?, dep = ?, amount = ? WHERE guild_id = ? AND user_id = ?"
-            res[0] += int(amount)
-            res[2] = res[0] + res[1]
-            val = (
-                res[0],
-                res[1],
-                res[1],
-                ctx.guild.id,
-                member.id
-            )
-            self.bot.db.execute(q, val)
-            self.bot.db.commit()
+
+            wit = res.get('wit') + int(amount)
+            dep = res.get('dep')
+            tot = res.get('amount')
+            await self.bot.pool.execute("""UPDATE currency
+                                           SET wit = $1, dep = $2, amount = $3
+                                           WHERE guild_id = $4
+                                           AND user_id = $5""",
+                                        wit,
+                                        dep,
+                                        tot,
+                                        ctx.guild.id,
+                                        member.id
+                                        )
 
         await ctx.send(f"You gave {member.mention} {amount}!")
         return
@@ -736,9 +780,13 @@ class Economy(commands.Cog):
 
         for thing in items:
             if thing == item:
-                qry = self.bot.cursor.execute(
-                    f"SELECT wit, dep, amount FROM currency WHERE guild_id = {ctx.guild.id} AND user_id = {ctx.author.id};")
-                res = list(qry.fetchone())
+                res = await self.bot.pool.fetchrow("""SELECT wit, dep, amount
+                                                   FROM currency
+                                                   WHERE guild_id = $1
+                                                   AND user_id = $2""",
+                                                ctx.guild.id,
+                                                ctx.author.id
+                                                )
                 if res is None:
                     await ctx.send(
                         f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{self.get_prefix(ctx)}work` to start working!"
@@ -749,19 +797,18 @@ class Economy(commands.Cog):
                         await ctx.send(
                             f"Sorry, you do not have enough money on you! simply type in `{self.get_prefix(ctx)}withdraw {items[thing]}`"
                         )
-                    q = "UPDATE currency SET wit = ?, dep = ?, amount = ? WHERE guild_id = ? AND user_id = ?"
-                    res[0] -= items[item]
-                    res[2] = res[0] + res[1]
-                    val = (
-                        res[0],
-                        res[1],
-                        res[2],
-                        ctx.guild.id,
-                        ctx.author.id
-                    )
-                    self.bot.db.execute(q, val)
-                    self.bot.db.commit()
-
+                    wit = res.get('wit') - items[thing]
+                    dep = res.get('dep')
+                    amount = res.get('amount')
+                    await self.bot.pool.execute("""UPDATE currency
+                                                   SET wit = $1, dep = $2, amount = $3
+                                                   WHERE guild_id = $4
+                                                   AND user_id = $5""",
+                                                wit,
+                                                dep,
+                                                amount,
+                                                ctx.guild.id,
+                                                ctx.author.id)
                 await ctx.send(f"Successfully bought {item}! delicious!")
         return
 
