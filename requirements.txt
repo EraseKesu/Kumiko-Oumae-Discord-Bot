@@ -21,6 +21,7 @@ jishaku >= 0.1.5
 discord-timers==0.1.0
 beautifulsoup4 >= 4.8.2
 dpy-ui
+wavelink
 asyncpg
 timeago
 git+https://github.com/Rapptz/discord-ext-menus
