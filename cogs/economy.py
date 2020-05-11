@@ -15,7 +15,7 @@ UNSUCCESS = "<:redTick:596576672149667840>"
 class Economy(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-
+    """
     async def cog_command_error(self, ctx, error):
         if isinstance(error, commands.errors.CommandOnCooldown):
             embed = discord.Embed(
@@ -51,7 +51,7 @@ class Economy(commands.Cog):
                 inline=False
             )
             await ctx.send(embed=embed)
-
+"""
     def get_prefix(self, message):
         with open("db_files/custom_prefix.json", "r") as f:
             l = json.load(f)
@@ -147,12 +147,16 @@ class Economy(commands.Cog):
                                           LIMIT 10""",
                                           ctx.guild.id
                                           )
+        lb = sorted(lb, key=lambda x: lb[0], reverse=True)
         res = ""
+        x = 0
 
         counter = 0
 
         for a in lb:
-
+            x += 1 if x != 0 else 0
+            print(x)
+            print(len(a))
             counter += 1
             print(counter)
 
@@ -161,11 +165,10 @@ class Economy(commands.Cog):
                 pass
 
             else:
-                res1 = await self.bot.pool.fetchval(f"SELECT user_id FROM currency WHERE guild_id = {ctx.guild.id}", column=counter-1)
+                res1 = await self.bot.pool.fetchval(f"SELECT user_id FROM currency WHERE guild_id = {ctx.guild.id}", column=len(a))
                 u = self.bot.get_user(res1)
-                lb[0] = str(lb[0])
-                lb[0] = lb[0].strip("<Record amount=>")
-                res += f"\n**{counter}.** `{u}` - **{lb[0]} $**"
+                res += f"\n**{counter}.** `{u}` - **{lb[x]} $**"
+                x += 1
 
         embed = discord.Embed(
             description=res,
@@ -483,12 +486,12 @@ class Economy(commands.Cog):
     async def balance(self, ctx):
         get_pref = self.get_prefix(ctx)
         res = await self.bot.pool.fetchrow("""SELECT wit, dep, amount
-                                        FROM currency 
-                                        HERE guild_id = $1
-                                        AND user_id = $2""",
-                                     ctx.guild.id,
-                                     ctx.author.id
-                                     )
+                                              FROM currency 
+                                              WHERE guild_id = $1
+                                              AND user_id = $2""",
+                                           ctx.guild.id,
+                                           ctx.author.id
+                                           )
         if res is None:
             await ctx.send(
                 f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{get_pref}work` to start working!"
@@ -529,9 +532,9 @@ class Economy(commands.Cog):
             await ctx.send("Please specify an amount to withdraw!")
             return
         res = await self.bot.pool.fetchrow("""SELECT wit, dep, amount
-                                        FROM currency
-                                        WHERE guild_id = $1
-                                        AND user_id = $2""",
+                                              FROM currency
+                                              WHERE guild_id = $1
+                                              AND user_id = $2""",
                                            ctx.guild.id,
                                            ctx.author.id
                                            )
@@ -541,36 +544,49 @@ class Economy(commands.Cog):
             )
             return
         if res is not None:
-            wit = res.get('wit') + amount
-            dep = res.get('dep') - amount
-            tot = dep + wit
-            if dep <= 0:
-                await ctx.send("Sorry, you cannot withdraw more than your balance!")
-                return
-            await self.bot.pool.execute("""UPDATE currency
-                                           SET wit = $1, dep = $2, amount = $3
-                                           WHERE guild_id = $4
-                                           AND user_id = $5""",
-                                        wit,
-                                        dep,
-                                        tot,
-                                        ctx.guild.id,
-                                        ctx.author.id
-                                        )
             if amount == "all":
-                wit = res.get('wit') + res.get('dep')
-                dep = res.get('wit') - res.get('dep')
-                tot = wit + dep
+                wit = res.get('wit')
+                wit += res.get('dep')
+                daf = res.get('dep')
+                waf = res.get('wit')
+                tot = wit
                 await self.bot.pool.execute("""UPDATE currency
-                                                           SET wit = $1, dep = $2, amount = $3
-                                                           WHERE guild_id = $4
-                                                           AND user_id = $5""",
+                                               SET wit = $1, dep = $2, amount = $3
+                                               WHERE guild_id = $4
+                                               AND user_id = $5""",
+                                            wit,
+                                            0,
+                                            tot,
+                                            ctx.guild.id,
+                                            ctx.author.id
+                                            )
+            else:
+                if res.get('dep') - int(amount) < 0:
+                    await ctx.send("Sorry, you cannot withdraw more than your bank balance!")
+                    return
+                wit = res.get('wit') + int(amount)
+                dep = res.get('dep') - int(amount)
+                daf = int(amount)
+                waf = int(amount)
+                tot = dep + wit
+                await self.bot.pool.execute("""UPDATE currency
+                                               SET wit = $1, dep = $2, amount = $3
+                                               WHERE guild_id = $4
+                                               AND user_id = $5""",
                                             wit,
                                             dep,
                                             tot,
                                             ctx.guild.id,
                                             ctx.author.id
                                             )
+
+        res = await self.bot.pool.fetchrow("""SELECT wit, dep
+                                              FROM currency
+                                              WHERE guild_id = $1
+                                              AND user_id = $2""",
+                                           ctx.guild.id,
+                                           ctx.author.id
+                                           )
 
         embed = discord.Embed(
             title="Balance",
@@ -588,7 +604,7 @@ class Economy(commands.Cog):
         )
         embed.add_field(
             name="Total:",
-            value=f"`{res.get('amount')}`",
+            value=f"`{res.get('dep') + res.get('wit')}`",
             inline=False
         )
 
@@ -601,9 +617,9 @@ class Economy(commands.Cog):
             await ctx.send("Please specify an amount to deposit!")
             return
         res = await self.bot.pool.fetchrow("""SELECT wit, dep, amount
-                                                FROM currency
-                                                WHERE guild_id = $1
-                                                AND user_id = $2""",
+                                              FROM currency
+                                              WHERE guild_id = $1
+                                              AND user_id = $2""",
                                            ctx.guild.id,
                                            ctx.author.id
                                            )
@@ -613,36 +629,45 @@ class Economy(commands.Cog):
             )
             return
         if res is not None:
-            wit = res.get('wit') - amount
-            dep = res.get('dep') + amount
-            tot = dep + wit
-            if wit <= 0:
-                await ctx.send("Sorry, you cannot deposit more than you have on you!")
-                return
-            await self.bot.pool.execute("""UPDATE currency
-                                                   SET wit = $1, dep = $2, amount = $3
-                                                   WHERE guild_id = $4
-                                                   AND user_id = $5""",
-                                        wit,
-                                        dep,
-                                        tot,
-                                        ctx.guild.id,
-                                        ctx.author.id
-                                        )
             if amount == "all":
-                wit = res.get('wit') - res.get('dep')
-                dep = res.get('wit') + res.get('dep')
-                tot = wit + dep
+                dep = res.get('dep')
+                dep += res.get('wit')
+                tot = dep
                 await self.bot.pool.execute("""UPDATE currency
-                                                                   SET wit = $1, dep = $2, amount = $3
-                                                                   WHERE guild_id = $4
-                                                                   AND user_id = $5""",
+                                               SET wit = $1, dep = $2, amount = $3
+                                               WHERE guild_id = $4
+                                               AND user_id = $5""",
+                                            0,
+                                            dep,
+                                            tot,
+                                            ctx.guild.id,
+                                            ctx.author.id
+                                            )
+            else:
+                if res.get('wit') - int(amount) < 0:
+                    await ctx.send("sorry, you don't have that much money on you!")
+                    return
+                wit = res.get('wit') - int(amount)
+                dep = res.get('dep') + int(amount)
+                tot = dep + wit
+                await self.bot.pool.execute("""UPDATE currency
+                                               SET wit = $1, dep = $2, amount = $3
+                                               WHERE guild_id = $4
+                                               AND user_id = $5""",
                                             wit,
                                             dep,
                                             tot,
                                             ctx.guild.id,
                                             ctx.author.id
                                             )
+
+        res = await self.bot.pool.fetchrow("""SELECT wit, dep
+                                              FROM currency
+                                              WHERE guild_id = $1
+                                              AND user_id = $2""",
+                                           ctx.guild.id,
+                                           ctx.author.id
+                                           )
 
         embed = discord.Embed(
             title="Balance",
@@ -660,7 +685,7 @@ class Economy(commands.Cog):
         )
         embed.add_field(
             name="Total:",
-            value=f"`{res.get('amount')}`",
+            value=f"`{res.get('dep') + res.get('wit')}`",
             inline=False
         )
 
@@ -707,9 +732,9 @@ class Economy(commands.Cog):
                                         ctx.author.id
                                         )
         res = await self.bot.pool.fetchrow("""SELECT wit, dep, amount
-                                               FROM currency
-                                               WHERE guild_id = $1
-                                               AND user_id = $2""",
+                                              FROM currency
+                                              WHERE guild_id = $1
+                                              AND user_id = $2""",
                                            ctx.guild.id,
                                            member.id
                                            )

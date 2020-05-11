@@ -34,28 +34,6 @@ class Custom(commands.Cog):
             json.dump(l, f, indent=4)
 
         await ctx.send(f"Server prefix is now {prefix}!")
-    # TODO: make a botvar to access a json file that contains user ids and their set language.
-
-    @commands.command(aliases=["setlang", "sl"])
-    async def setlanguage(self, ctx, language: str = None):
-        if language not in googletrans.LANGUAGES or googletrans.LANGCODES:
-            await ctx.send(f"```bf\n{googletrans.LANGUAGES}\n```\n```bf\n{googletrans.LANGCODES}\n```")
-            return
-        else:
-            with open("db_files/languages.json", "r") as f:
-                l = json.load(f)
-
-            l[str(ctx.author.id)] = language
-
-            with open("db_files/languages.json", "w") as f:
-                json.dump(l, f, indent=4)
-            try:
-                await ctx.trans(
-                    f"Ok,{ctx.author.mention}, from now on i will talk to you in {language}",
-                    language
-                )
-            except ValueError:
-                await ctx.send("Invalid destination lang!")
 
 
 def setup(bot):

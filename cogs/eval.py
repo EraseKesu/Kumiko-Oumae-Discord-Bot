@@ -38,6 +38,7 @@ class Evaluator(commands.Cog):
         self.bot = bot
 
     @commands.command(aliases=["eval", "e"])
+    @commands.is_owner()
     async def eval_fn(self, ctx, *, cmd):
         """Evaluates input.
         Input is interpreted as newline seperated statements.

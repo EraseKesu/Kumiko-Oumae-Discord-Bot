@@ -70,9 +70,6 @@ instance/
 # Sphinx documentation
 docs/_build/
 
-# PyBuilder
-target/
-
 # Jupyter Notebook
 .ipynb_checkpoints
 
@@ -104,7 +101,6 @@ venv/
 ENV/
 env.bak/
 venv.bak/
-config.py
 
 # Spyder project settings
 .spyderproject
@@ -123,12 +119,3 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-
-# Other
-Lavalink.jar
-Procfile
-db_files/
-logs/
-idea/
-application.yml
-gangs/

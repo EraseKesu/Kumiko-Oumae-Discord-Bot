@@ -295,11 +295,12 @@ class Music(commands.Cog):
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+        self.bot.wavelink = wavelink.Client(bot=self.bot)
 
         if not hasattr(bot, 'wavelink'):
-            bot.wavelink = wavelink.Client(bot)
+            bot.wavelink = wavelink.Client(bot=bot)
 
-        bot.loop.create_task(self.start_nodes())
+            bot.loop.create_task(self.start_nodes())
 
     async def start_nodes(self) -> None:
         """Connect and intiate nodes."""

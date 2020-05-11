@@ -1,0 +1,20 @@
+os:
+    - linux
+
+language: python
+python:
+    - 2.7
+    - 3.7
+
+install:
+    - python setup.py install
+
+script:
+    - echo 268642 > /tmp/test.txt
+    - nhentai --cookie "csrftoken=xIh7s9d4NB8qSLN7eJZG9064zsV84aHEYFoAU49Ib9anqmoT0pZRw6TIdayLzQuT; sessionid=un101zfgpglsyffdnsm72le4euuisp7t"
+    - nhentai --search umaru
+    - nhentai --id=152503,146134 -t 10 --output=/tmp/ --cbz
+    - nhentai --tag lolicon --sorting popular
+    - nhentai -F
+    - nhentai --file /tmp/test.txt
+    - nhentai --id=152503,146134 --gen-main --output=/tmp/

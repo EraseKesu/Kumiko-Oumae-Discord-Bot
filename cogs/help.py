@@ -261,6 +261,18 @@ class Help(commands.Cog):
                     except:
                         pass
 
+        leveling = ""
+
+        for a in self.bot.commands:
+            if a.cog_name == "Leveling":
+                if not a.hidden:
+                    leveling += f"`{prefix}{a.name}` ◍ "
+                    try:
+                        for b in a.commands:
+                            leveling += f"`{prefix}{a.name} {b.name}` ◍ "
+                    except:
+                        pass
+
         fdescriptions = [f"""
             **FUN**
             {fun}
@@ -307,6 +319,10 @@ class Help(commands.Cog):
 
             """,
                              f"""
+            **LEVELING**
+            {leveling}
+
+            """,             f"""
             **CUSTOM**
             {custom}
 
@@ -336,7 +352,7 @@ class Help(commands.Cog):
         )
         embed.add_field(
             name="Bot Version:",
-            value="version 0.6.1",
+            value="version 1.1",
             inline=True
         )
         embed.add_field(

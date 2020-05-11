@@ -25,6 +25,7 @@ from discord.ext import commands
 from psutil import Process
 from os import getpid
 import logging
+import wavelink
 from googletrans import Translator
 translator = Translator()
 
@@ -94,12 +95,14 @@ class MyContext(commands.Context):
         res = translator.translate(query, dest=language)
         return res.text
 
+    async def pissoffchr1s(self):
+        msg = await self.message.channel.send("<@246938839720001536>")
+        await msg.delete()
+
 
 class MyBot(commands.Bot):
     def __init__(self):
         super().__init__(command_prefix=get_prefix)
-        languages = open("db_files/languages.json", "r")
-        self.languages = json.load(languages)
 
     async def _init(self):
         pool = await Database.connect()
@@ -162,7 +165,7 @@ async def ping(ctx):
     pong = await ctx.send('**:ping_pong:** Pong!')
     delta = pong.created_at - ping.created_at
     delta = int(delta.total_seconds() * 1000)
-    await pong.edit(content=f':ping_pong: Pong! ({delta} ms)\n*Discord WebSocket Latency: {round(bot.latency, 5)} ms*')
+    await pong.edit(content=f':ping_pong: Pong! ({delta} ms)\n*Discord WebSocket Latency: {round(bot.latency * 1000, 5)} ms*')
 
 
 async def run_bot():
