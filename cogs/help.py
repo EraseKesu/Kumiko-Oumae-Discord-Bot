@@ -14,9 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 import discord
-import asyncpg
-from psutil import Process
-from os import getpid
 import json
 
 from discord.ext import commands, menus
@@ -339,11 +336,6 @@ class Help(commands.Cog):
             title="About",
             description=f"I was made by {owner}.",
             colour=0xED791D
-        )
-        embed.add_field(
-            name="Memory usage:",
-            value=f"**{round(Process(getpid()).memory_info().rss/1024/1024, 2)} MB** of memory.",
-            inline=True
         )
         embed.add_field(
             name="Written in:",

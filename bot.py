@@ -22,12 +22,8 @@ import json
 import asyncpg
 from utils.db import Database
 from discord.ext import commands
-from psutil import Process
 from os import getpid
 import logging
-import wavelink
-from googletrans import Translator
-translator = Translator()
 
 loop = asyncio.get_event_loop()
 
@@ -87,14 +83,6 @@ class MyContext(commands.Context):
 
         await self.message.channel.send(embed=e)
 
-    async def trans(self, query: str, language):
-        res = translator.translate(query, dest=language)
-        await self.message.channel.send(res.text)
-
-    async def rtranslate(self, query: str, language):
-        res = translator.translate(query, dest=language)
-        return res.text
-
     async def pissoffchr1s(self):
         msg = await self.message.channel.send("<@246938839720001536>")
         await msg.delete()
@@ -151,12 +139,6 @@ async def on_ready():
     bot.load_extension("jishaku")
     for extension in inital_extension:
         bot.load_extension(extension)
-
-
-@bot.command(aliases=['mem', 'm'], hidden=True)
-@commands.is_owner()
-async def memory(ctx):
-    await ctx.send(f'im currently using **{round(Process(getpid()).memory_info().rss/1024/1024, 2)} MB** of memory.')
 
 
 @bot.command()
