@@ -22,6 +22,7 @@ discord-timers==0.1.0
 beautifulsoup4 >= 4.8.2
 dpy-ui
 asyncpg
+timeago
 git+https://github.com/Rapptz/discord-ext-menus
 git+https://github.com/Rapptz/discord.py@master#egg=discord.py[voice]
 git+https://github.com/Devoxin/Lavalink.py@dev
