@@ -13,6 +13,7 @@ parsedatetime
 matplotlib
 pillow
 mtranslate
+PyNaCl
 datetime
 lavalink==3.0.0
 lazy-object-proxy==1.4.3
