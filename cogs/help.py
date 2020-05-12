@@ -70,6 +70,7 @@ class Help(commands.Cog):
     async def help(self, ctx, command: str = None):
         global prefix
         prefix = await get_prefix(self.bot, ctx)
+        prefix = prefix[1]
         global CTX
         CTX = ctx
         error = f'```css\nThat command, "{command}", does not exist!\n```'
