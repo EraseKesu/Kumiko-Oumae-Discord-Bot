@@ -1,8 +1,6 @@
 import discord
-import json
-import asyncpg
 from discord.ext import commands
-import googletrans
+
 
 class Custom(commands.Cog):
     def __init__(self, bot):
@@ -11,29 +9,33 @@ class Custom(commands.Cog):
     @commands.command(aliases=["ar", "joinrole"])
     @commands.has_permissions(administrator=True)
     async def autorole(self, ctx, rn: str):
-        conn = await asyncpg.connect('postgresql://postgres@localhost/postgres')
-        query = f"""
-        UPDATE db
-        SET auto_role = ?
-        WHERE guild_id = ?
-        """
-        val = (rn, ctx.guild.id)
-        await conn.execute(query, val)
+        await self.bot.poo.l.execute(f"""UPDATE db
+                                         SET auto_role = $1
+                                         WHERE guild_id = $2""",
+                                     rn,
+                                     ctx.guild.id
+                                     )
+        reminder = "Remember, if you don't already have one, for this to work the server must have a 'welcome' channel."
 
-        await ctx.send(f"Done! Now when a member joins, they will get the {rn} role!")
-        await conn.close()
+        await ctx.send(f"Ok, When a member joins the server, i will give them the {rn} role. {reminder}")
 
     @commands.command(aliases=["cp", "changep"])
     async def changeprefix(self, ctx, prefix: str):
-        with open("db_files/custom_prefix.json", "r") as f:
-            l = json.load(f)
+        await self.bot.pool.execute("""UPDATE db
+                                       SET prefix = $1
+                                       WHERE guild_id = $2""",
+                                    prefix,
+                                    ctx.guild.id
+                                    )
+        await ctx.send(f"Ok, The server prefix has been set to {prefix}.")
 
-        l[str(ctx.guild.id)] = prefix
-
-        with open("db_files/custom_prefix.json", "w") as f:
-            json.dump(l, f, indent=4)
-
-        await ctx.send(f"Server prefix is now {prefix}!")
+    @commands.command(aliases=["set_welcome", "wc", "setw", "sw"])
+    async def welcome_channel(self, ctx, channel: discord.TextChannel):
+        res = await self.bot.pool.fetchrow("""SELECT welcome_channel
+                                              FROM db
+                                              WHERE guild_id = $1""",
+                                           ctx.guild.id
+                                           )
 
 
 def setup(bot):
