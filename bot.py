@@ -33,10 +33,10 @@ async def get_prefix(bot, message):
                                   message.guild.id
                                   )
     if res is None:
-        prefix = commands.when_mentioned_or('+-')
+        prefix = commands.when_mentioned_or('+-')(bot, message)
 
     if res is not None:
-        prefix = commands.when_mentioned_or(res.get("prefix"))
+        prefix = commands.when_mentioned_or(res.get("prefix"))(bot, message)
 
     return prefix
 
