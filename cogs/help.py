@@ -68,7 +68,7 @@ class Help(commands.Cog):
 
     @commands.command()
     async def help(self, ctx, command: str = None):
-        prefix = self.bot.command_prefix
+        prefix = self.bot.command_prefix()
         global CTX
         CTX = ctx
         error = f'```css\nThat command, "{command}", does not exist!\n```'
