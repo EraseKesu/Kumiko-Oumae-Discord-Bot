@@ -182,7 +182,7 @@ async def run_bot():
         bot.http.send_message = send_message
 
     try:
-        bot.pool = await asyncpg.create_pool(user="postgres")
+        bot.pool = await asyncpg.create_pool(config.postgres_uri)
     except (ConnectionError, asyncpg.exceptions.CannotConnectNowError):
         bot.logger.critical("Could not connect to postgres.")
 
@@ -194,10 +194,6 @@ async def close_bot():
     bot.logger.info("Closed postgres database connection.")
     await bot.logout()
     bot.logger.info("Logged out bot.")
-    await bot.session.close()
-    bot.logger.info("Closed aiohttp ClientSession.")
-    await bot.http._HTTPClient__session.close()
-    bot.logger.info("Closed internal bot ClientSession.")
     for task in asyncio.all_tasks(loop=loop):
         task.cancel()
         bot.logger.info("Canceled a running task.")
