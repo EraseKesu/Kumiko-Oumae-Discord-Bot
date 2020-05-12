@@ -24,7 +24,7 @@ class HelpSource(menus.ListPageSource):
         url = "https://patreon.com/user?0=u&1=%3D&2=3&3=4&4=6&5=2&6=8&7=9&8=3&9=7&utm_medium=social&utm_source=twitter&utm_campaign=creatorshare"
         if isinstance(page, str):
             embed = discord.Embed(
-                title=f'Help| Type {await get_prefix(bot=BOT, message=CTX)}setup to setup the server',
+                title=f'Help| Type {prefix}setup to setup the server',
                 description=f"[Join our support server](https://discord.gg/YUm2sBD) | [Support us on Patreon!]({url})" + ''.join(page),
                 color=0xED791D
             )
@@ -35,7 +35,7 @@ class HelpSource(menus.ListPageSource):
         else:
 
             embed = discord.Embed(
-                title=f'Help| Type {await get_prefix(bot=BOT, message=CTX)}setup to setup the server',
+                title=f'Help| Type {prefix}setup to setup the server',
                 description=f"[Join our support server](https://discord.gg/YUm2sBD) | [Support us on Patreon!]({url})" + '\n'.join(page),
                 color=0xED791D
             )
@@ -68,6 +68,7 @@ class Help(commands.Cog):
 
     @commands.command()
     async def help(self, ctx, command: str = None):
+        global prefix
         prefix = await get_prefix(self.bot, ctx)
         global CTX
         CTX = ctx
