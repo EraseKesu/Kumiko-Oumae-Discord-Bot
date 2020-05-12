@@ -200,11 +200,11 @@ class Economy(commands.Cog):
                                      )
         if res is None:
             await ctx.send(
-                f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{get_pref[1]}work` to start working!"
+                f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{get_pref[2]}work` to start working!"
             )
             return
         if int(res.get('wit')) < 350:
-            await ctx.send(f"You do not have at least 350 on you! `{get_pref[1]}withdraw`some money from your bank.")
+            await ctx.send(f"You do not have at least 350 on you! `{get_pref[2]}withdraw`some money from your bank.")
             return
         if chance == "yes":
             money = random.randint(100, 400)
@@ -333,12 +333,12 @@ class Economy(commands.Cog):
                                            )
         if res is None:
             await ctx.send(
-                f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{get_pref[1]}work` to start working!"
+                f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{get_pref[2]}work` to start working!"
             )
             return
         if res.get('wit') < 350:
             await ctx.send(
-                f"You do not have at least 350 on you! `{get_pref[1]}withdraw`some money from your bank.")
+                f"You do not have at least 350 on you! `{get_pref[2]}withdraw`some money from your bank.")
             return
         if chance == "yes":
             money = random.randint(100, 400)
@@ -502,7 +502,7 @@ class Economy(commands.Cog):
                                            )
         if res is None:
             await ctx.send(
-                f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{get_pref[1]}work` to start working!"
+                f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{get_pref[2]}work` to start working!"
             )
             return
 
@@ -548,7 +548,7 @@ class Economy(commands.Cog):
                                            )
         if res is None:
             await ctx.send(
-                f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{get_pref[1]}work` to start working!"
+                f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{get_pref[2]}work` to start working!"
             )
             return
         if res is not None:
@@ -630,7 +630,7 @@ class Economy(commands.Cog):
                                            )
         if res is None:
             await ctx.send(
-                f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{get_pref[1]}work` to start working!"
+                f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{get_pref[2]}work` to start working!"
             )
             return
         if res is not None:
@@ -714,13 +714,13 @@ class Economy(commands.Cog):
                                            )
         if res is None:
             await ctx.send(
-                f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{get_pref[1]}work` to start working!"
+                f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{get_pref[2]}work` to start working!"
             )
             return
         if res is not None:
             if res[0] < int(amount):
                 await ctx.send(
-                    f"Sorry, you do not have enough money on you! simply type in `{get_pref[1]}withdraw {int(amount)}`"
+                    f"Sorry, you do not have enough money on you! simply type in `{get_pref[2]}withdraw {int(amount)}`"
                 )
                 return
 
@@ -746,7 +746,7 @@ class Economy(commands.Cog):
                                            )
         if res is None:
             await ctx.send(
-                f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{get_pref[1]}work` to start working!"
+                f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{get_pref[2]}work` to start working!"
             )
             return
         if res is not None:
@@ -821,13 +821,13 @@ class Economy(commands.Cog):
                                                 )
                 if res is None:
                     await ctx.send(
-                        f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{get_pref[1]}work` to start working!"
+                        f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{get_pref[2]}work` to start working!"
                     )
                     return
                 if res is not None:
                     if res.get("wit") < items[thing]:
                         await ctx.send(
-                            f"Sorry, you do not have enough money on you! simply type in `{get_pref[1]}withdraw {items[thing]}`"
+                            f"Sorry, you do not have enough money on you! simply type in `{get_pref[2]}withdraw {items[thing]}`"
                         )
                     wit = res.get('wit') - items[thing]
                     dep = res.get('dep')
