@@ -1,8 +1,7 @@
 import contextlib
-from dataclasses import dataclass
 import operator
 import time
-from typing import Dict, List, Set
+from typing import Dict, Set
 
 import discord
 from discord.ext import commands

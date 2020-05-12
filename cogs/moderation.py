@@ -17,13 +17,13 @@ limitations under the License.
 import discord
 import asyncio
 import datetime
-import argparse, shlex
+import argparse
+import shlex
 import re
 import io
 from collections import Counter
-from utils import time, checks
-from discord.ext import commands, timers
-import sqlite3
+from utils import checks
+from discord.ext import commands
 
 
 class ActionReason(commands.Converter):

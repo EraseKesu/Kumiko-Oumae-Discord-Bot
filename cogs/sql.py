@@ -6,7 +6,6 @@ import discord
 from discord.ext import commands
 import datetime
 import sqlite3
-import asyncpg
 
 
 class SQL(commands.Cog):

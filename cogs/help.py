@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 import discord
-import json
 
 from discord.ext import commands, menus
 

@@ -18,7 +18,6 @@ import config
 import discord
 import smtplib
 import asyncio
-import json
 import asyncpg
 from utils.db import Database
 from discord.ext import commands
@@ -87,7 +86,7 @@ class MyContext(commands.Context):
 
 class MyBot(commands.Bot):
     def __init__(self):
-        super().__init__(command_prefix="+-")
+        super().__init__(command_prefix=get_prefix)
 
     async def _init(self):
         pool = await Database.connect()

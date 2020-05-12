@@ -1,15 +1,17 @@
 import matplotlib
-
-matplotlib.use("Agg")
 import matplotlib.font_manager as font_manager
 import matplotlib.pyplot as plt
+
 import aiohttp
 import datetime
 import discord
+
 from io import BytesIO
 from discord.ext import commands
 from discord.ext.commands.cooldowns import BucketType
 from PIL import Image, ImageDraw
+
+matplotlib.use("Agg")
 
 
 class Images(commands.Cog):
