@@ -120,8 +120,7 @@ inital_extension = [
   'cogs.custom',
   'cogs.image',
   'cogs.economy',
-  'cogs.translator',
-  'cogs.music'
+  'cogs.translator'
 ]
 
 

@@ -35,16 +35,13 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
-        path = "C:\\Users\\eitan\\OmegaBot\\db_files\\premium.json"
-        with open(path, "r") as f:
+        with open("db_files/prime.json", "r") as f:
             l = json.load(f)
 
         try:
-            l[str(guild.id)] += 1
+            print(l[str(guild.id)])
         except KeyError:
             await guild.leave()
-        else:
-            l[str(guild.id)] -= 1
 
         await self.bot.pool.execute(f"""INSERT INTO db(guild_id, prefix, auto_role, welcome_channel)
                                         VALUES ($1, $2, $3, $4)""",
