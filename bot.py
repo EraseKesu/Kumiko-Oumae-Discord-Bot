@@ -33,10 +33,10 @@ async def get_prefix(bot, message):
                                   message.guild.id
                                   )
     if res is None:
-        prefix = commands.when_mentioned_or('+-')(bot, message)
+        prefix = commands.when_mentioned_or('+-')
 
     if res is not None:
-        prefix = commands.when_mentioned_or(res.get("prefix"))(bot, message)
+        prefix = commands.when_mentioned_or(res.get("prefix"))
 
     return prefix
 
@@ -190,6 +190,8 @@ async def close_bot():
     bot.logger.info("Closed postgres database connection.")
     await bot.logout()
     bot.logger.info("Logged out bot.")
+    await bot.http.close()
+    bot.logger.info("HTTP session closed")
     for task in asyncio.all_tasks(loop=loop):
         task.cancel()
         bot.logger.info("Canceled a running task.")

@@ -1,5 +1,6 @@
 import discord
 import random
+import math
 from discord.ext.commands.cooldowns import BucketType
 from discord.ext import commands
 
@@ -10,10 +11,25 @@ SUCCESS = "<:greenTick:596576670815879169>"
 UNSUCCESS = "<:redTick:596576672149667840>"
 
 
+async def get_prefix(bot, message):
+    res = await bot.pool.fetchrow("""SELECT prefix
+                                     FROM db
+                                     WHERE guild_id = $1""",
+                                  message.guild.id
+                                  )
+    if res is None:
+        prefix = commands.when_mentioned_or('+-')
+
+    if res is not None:
+        prefix = commands.when_mentioned_or(res.get("prefix"))
+
+    return prefix
+
+
 class Economy(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-    """
+
     async def cog_command_error(self, ctx, error):
         if isinstance(error, commands.errors.CommandOnCooldown):
             embed = discord.Embed(
@@ -23,7 +39,7 @@ class Economy(commands.Cog):
             ret_aft = math.ceil(error.retry_after)
             embed.add_field(
                 name="Error Message",
-                value=f"```tex\n$\nYou are on cooldown! Try again in {error.retry_after}\n$\n```",
+                value=f"```tex\n$\nYou are on cooldown! Try again in {ret_aft}\n$\n```",
                 inline=True
             )
             await ctx.send(embed=embed)
@@ -49,23 +65,8 @@ class Economy(commands.Cog):
                 inline=False
             )
             await ctx.send(embed=embed)
-"""
 
-    async def get_prefix(self, bot, message):
-        res = await bot.pool.fetchrow("""SELECT prefix
-                                         FROM db
-                                         WHERE guild_id = $1""",
-                                      message.guild.id
-                                      )
-        if res is None:
-            prefix = commands.when_mentioned_or('+-')(bot, message)
-
-        if res is not None:
-            prefix = commands.when_mentioned_or(res.get("prefix"))(bot, message)
-
-        return prefix
-
-    @commands.group(invoke_without_command=True)
+    @commands.command()
     @commands.cooldown(1, 3600, BucketType.user)
     async def work(self, ctx):
             money = random.randint(100, 300)
@@ -141,11 +142,11 @@ class Economy(commands.Cog):
 
     @commands.command(aliases=["leaderboard"])
     async def top(self, ctx):
-        lb = await self.bot.pool.fetch(f"""SELECT amount
-                                          FROM currency
-                                          WHERE guild_id = $1
-                                          ORDER BY amount DESC
-                                          LIMIT 10""",
+        lb = await self.bot.pool.fetch("""SELECT amount
+                                           FROM currency
+                                           WHERE guild_id = $1
+                                           ORDER BY amount DESC
+                                           LIMIT 10""",
                                           ctx.guild.id
                                           )
         lb = sorted(lb, key=lambda x: lb[0], reverse=True)
@@ -166,7 +167,11 @@ class Economy(commands.Cog):
                 pass
 
             else:
-                res1 = await self.bot.pool.fetchval(f"SELECT user_id FROM currency WHERE guild_id = {ctx.guild.id}", column=len(a))
+                res1 = await self.bot.pool.fetchval("""SELECT user_id
+                                                       FROM currency
+                                                       WHERE guild_id = $1""",
+                                                    ctx.guild.id,
+                                                    column=len(a))
                 u = self.bot.get_user(res1)
                 res += f"\n**{counter}.** `{u}` - **{lb[x]} $**"
                 x += 1
@@ -184,12 +189,12 @@ class Economy(commands.Cog):
     @commands.command()
     @commands.cooldown(1, 3600, BucketType.user)
     async def crime(self, ctx):
-        get_pref = await self.get_prefix(self.bot, ctx)
+        get_pref = await get_prefix(self.bot, ctx)
         chance = random.choice(["yes", "yes", "yes", "yes", "yes", "no", "yes", "no", "yes", "no"])
         res = await self.bot.pool.fetchrow("""SELECT wit, dep, amount
-                                        FROM currency
-                                        WHERE guild_id = $1
-                                        AND user_id = $2""",
+                                              FROM currency
+                                              WHERE guild_id = $1
+                                              AND user_id = $2""",
                                      ctx.guild.id,
                                      ctx.author.id
                                      )
@@ -314,6 +319,7 @@ class Economy(commands.Cog):
     @commands.command()
     @commands.cooldown(1, 3600, BucketType.user)
     async def rob(self, ctx, member: discord.Member):
+        get_pref = await get_prefix(self.bot, ctx)
         if member.id == ctx.author.id:
             await ctx.send("Sorry, you cannot rob yourself!")
             return
@@ -327,12 +333,12 @@ class Economy(commands.Cog):
                                            )
         if res is None:
             await ctx.send(
-                f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{await self.get_prefix(self.bot, ctx)}work` to start working!"
+                f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{get_pref}work` to start working!"
             )
             return
         if res.get('wit') < 350:
             await ctx.send(
-                f"You do not have at least 350 on you! `{await self.get_prefix(self.bot, ctx)}withdraw`some money from your bank.")
+                f"You do not have at least 350 on you! `{get_pref}withdraw`some money from your bank.")
             return
         if chance == "yes":
             money = random.randint(100, 400)
@@ -486,7 +492,7 @@ class Economy(commands.Cog):
 
     @commands.command(aliases=["bal"])
     async def balance(self, ctx):
-        get_pref = await self.get_prefix(self.bot, ctx)
+        get_pref = await get_prefix(self.bot, ctx)
         res = await self.bot.pool.fetchrow("""SELECT wit, dep, amount
                                               FROM currency 
                                               WHERE guild_id = $1
@@ -529,7 +535,7 @@ class Economy(commands.Cog):
 
     @commands.command(aliases=["with"])
     async def withdraw(self, ctx, amount):
-        get_pref = await self.get_prefix(self.bot, ctx)
+        get_pref = await get_prefix(self.bot, ctx)
         if amount == "":
             await ctx.send("Please specify an amount to withdraw!")
             return
@@ -611,7 +617,7 @@ class Economy(commands.Cog):
 
     @commands.command(aliases=["dep"])
     async def deposit(self, ctx, amount):
-        get_pref = await self.get_prefix(self.bot, ctx)
+        get_pref = await get_prefix(self.bot, ctx)
         if amount == "":
             await ctx.send("Please specify an amount to deposit!")
             return
@@ -693,7 +699,7 @@ class Economy(commands.Cog):
 
     @commands.command()
     async def give(self, ctx, member: discord.Member = None, amount: int = None):
-        get_pref = await self.get_prefix(self.bot, ctx)
+        get_pref = await get_prefix(self.bot, ctx)
         if member is None:
             await ctx.send("Please specify a person to give money to!")
         if amount is None:
@@ -788,7 +794,7 @@ class Economy(commands.Cog):
 
     @shop.command()
     async def buy(self, ctx, item: str = None):
-        get_pref = await self.get_prefix(self.bot, ctx)
+        get_pref = await get_prefix(self.bot, ctx)
         items = {
             "Pizza": 10,
             "Burger": 15,
