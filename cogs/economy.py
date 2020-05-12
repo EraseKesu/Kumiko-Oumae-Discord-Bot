@@ -184,6 +184,7 @@ class Economy(commands.Cog):
     @commands.command()
     @commands.cooldown(1, 3600, BucketType.user)
     async def crime(self, ctx):
+        get_pref = await self.get_prefix(self.bot, ctx)
         chance = random.choice(["yes", "yes", "yes", "yes", "yes", "no", "yes", "no", "yes", "no"])
         res = await self.bot.pool.fetchrow("""SELECT wit, dep, amount
                                         FROM currency
@@ -194,11 +195,11 @@ class Economy(commands.Cog):
                                      )
         if res is None:
             await ctx.send(
-                f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{await self.get_prefix(self.bot, ctx)}work` to start working!"
+                f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{get_pref}work` to start working!"
             )
             return
         if int(res.get('wit')) < 350:
-            await ctx.send(f"You do not have at least 350 on you! `{await self.get_prefix(self.bot, ctx)}withdraw`some money from your bank.")
+            await ctx.send(f"You do not have at least 350 on you! `{get_pref}withdraw`some money from your bank.")
             return
         if chance == "yes":
             money = random.randint(100, 400)
@@ -548,8 +549,6 @@ class Economy(commands.Cog):
             if amount == "all":
                 wit = res.get('wit')
                 wit += res.get('dep')
-                daf = res.get('dep')
-                waf = res.get('wit')
                 tot = wit
                 await self.bot.pool.execute("""UPDATE currency
                                                SET wit = $1, dep = $2, amount = $3
@@ -567,8 +566,6 @@ class Economy(commands.Cog):
                     return
                 wit = res.get('wit') + int(amount)
                 dep = res.get('dep') - int(amount)
-                daf = int(amount)
-                waf = int(amount)
                 tot = dep + wit
                 await self.bot.pool.execute("""UPDATE currency
                                                SET wit = $1, dep = $2, amount = $3
@@ -614,6 +611,7 @@ class Economy(commands.Cog):
 
     @commands.command(aliases=["dep"])
     async def deposit(self, ctx, amount):
+        get_pref = await self.get_prefix(self.bot, ctx)
         if amount == "":
             await ctx.send("Please specify an amount to deposit!")
             return
@@ -626,7 +624,7 @@ class Economy(commands.Cog):
                                            )
         if res is None:
             await ctx.send(
-                f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{await self.get_prefix(self.bot, ctx)}work` to start working!"
+                f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{get_pref}work` to start working!"
             )
             return
         if res is not None:
@@ -695,6 +693,7 @@ class Economy(commands.Cog):
 
     @commands.command()
     async def give(self, ctx, member: discord.Member = None, amount: int = None):
+        get_pref = await self.get_prefix(self.bot, ctx)
         if member is None:
             await ctx.send("Please specify a person to give money to!")
         if amount is None:
@@ -709,13 +708,13 @@ class Economy(commands.Cog):
                                            )
         if res is None:
             await ctx.send(
-                f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{await self.get_prefix(self.bot, ctx)}work` to start working!"
+                f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{get_pref}work` to start working!"
             )
             return
         if res is not None:
             if res[0] < int(amount):
                 await ctx.send(
-                    f"Sorry, you do not have enough money on you! simply type in `{await self.get_prefix(self.bot, ctx)}withdraw {int(amount)}`"
+                    f"Sorry, you do not have enough money on you! simply type in `{get_pref}withdraw {int(amount)}`"
                 )
                 return
 
@@ -741,7 +740,7 @@ class Economy(commands.Cog):
                                            )
         if res is None:
             await ctx.send(
-                f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{await self.get_prefix(self.bot, ctx)}work` to start working!"
+                f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{get_pref}work` to start working!"
             )
             return
         if res is not None:
@@ -789,6 +788,7 @@ class Economy(commands.Cog):
 
     @shop.command()
     async def buy(self, ctx, item: str = None):
+        get_pref = await self.get_prefix(self.bot, ctx)
         items = {
             "Pizza": 10,
             "Burger": 15,
@@ -815,13 +815,13 @@ class Economy(commands.Cog):
                                                 )
                 if res is None:
                     await ctx.send(
-                        f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{await self.get_prefix(self.bot, ctx)}work` to start working!"
+                        f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{get_pref}work` to start working!"
                     )
                     return
                 if res is not None:
                     if res.get("wit") < items[thing]:
                         await ctx.send(
-                            f"Sorry, you do not have enough money on you! simply type in `{await self.get_prefix(self.bot, ctx)}withdraw {items[thing]}`"
+                            f"Sorry, you do not have enough money on you! simply type in `{get_pref}withdraw {items[thing]}`"
                         )
                     wit = res.get('wit') - items[thing]
                     dep = res.get('dep')
