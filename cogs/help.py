@@ -73,6 +73,7 @@ class Help(commands.Cog):
         prefix = prefix[2]
         global CTX
         CTX = ctx
+        usginfo = " (When using commands, <> indicates a required argument and [] indicates an optional argument.) do **NOT** include them when using commands."
         error = f'```css\nThat command, "{command}", does not exist!\n```'
         if command:
             embed = discord.Embed(
@@ -92,14 +93,14 @@ class Help(commands.Cog):
 
                     embed.add_field(
                         name="Usage:",
-                        value=f'{prefix}{cmd.parent} {cmd.name} {cmd.signature}',
+                        value=f'{usginfo}\n{prefix}{cmd.parent} {cmd.name} {cmd.signature}',
                         inline=False
                     )
                 else:
 
                     embed.add_field(
                         name="Usage:",
-                        value=f'{prefix}{cmd.name} {cmd.signature}',
+                        value=f'{usginfo}\n{prefix}{cmd.name} {cmd.signature}',
                         inline=False
                     )
 
