@@ -22,21 +22,22 @@ import json
 import asyncpg
 from utils.db import Database
 from discord.ext import commands
-from os import getpid
 import logging
 
 loop = asyncio.get_event_loop()
 
 
-def get_prefix(bot, message):
-    with open("db_files/custom_prefix.json", "r") as f:
-        l = json.load(f)
+async def get_prefix(bot, message):
+    res = await bot.pool.fetchrow("""SELECT prefix
+                                     FROM db
+                                     WHERE guild_id = $1""",
+                                  message.guild.id
+                                  )
+    if res is None:
+        prefix = commands.when_mentioned_or('+-')(bot, message)
 
-    try:
-        prefix = l[str(message.guild.id)]
-    except KeyError:
-        l[str(message.guild.id)] = '+-'
-        prefix = l[str(message.guild.id)]
+    if res is not None:
+        prefix = commands.when_mentioned_or(res.get("prefix"))(bot, message)
 
     return prefix
 
@@ -83,10 +84,6 @@ class MyContext(commands.Context):
 
         await self.message.channel.send(embed=e)
 
-    async def pissoffchr1s(self):
-        msg = await self.message.channel.send("<@246938839720001536>")
-        await msg.delete()
-
 
 class MyBot(commands.Bot):
     def __init__(self):
@@ -115,7 +112,6 @@ def get_members():
 
 inital_extension = [
   'cogs.userinfo',
-  'cogs.music',
   'cogs.moderation',
   'cogs.help',
   'cogs.fun',
@@ -125,7 +121,8 @@ inital_extension = [
   'cogs.custom',
   'cogs.image',
   'cogs.economy',
-  'cogs.translator'
+  'cogs.translator',
+  'cogs.music'
 ]
 
 

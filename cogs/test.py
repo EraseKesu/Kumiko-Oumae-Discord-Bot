@@ -5,11 +5,19 @@ import asyncio
 from discord.ext import commands, menus
 
 
-async def get_prefix(client, message):
-    with open("db_files/custom_prefix.json", "r") as f:
-        l = json.load(f)
+async def get_prefix(bot, message):
+    res = await bot.pool.fetchrow("""SELECT prefix
+                                     FROM db
+                                     WHERE guild_id = $1""",
+                                  message.guild.id
+                                  )
+    if res is None:
+        prefix = commands.when_mentioned_or('+-')(bot, message)
 
-    return l[str(message.guild.id)]
+    if res is not None:
+        prefix = commands.when_mentioned_or(res.get("prefix"))(bot, message)
+
+    return prefix
 
 
 class Test(commands.Cog):

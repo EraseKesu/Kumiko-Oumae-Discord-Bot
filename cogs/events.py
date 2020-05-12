@@ -13,9 +13,12 @@ class Events(commands.Cog):
         if member.guild.id == 336642139381301249:
             return
 
-        qry = self.bot.cursor.execute(f"SELECT auto_role FROM db WHERE guild_id = {member.guild.id}")
-        res = list(qry.fetchone())
-        role = discord.utils.get(member.guild.roles, name=res[0])
+        res = await self.bot.pool.fetchrow("""SELECT auto_role
+                                              FROM db
+                                              WHERE guild_id = $1""",
+                                           member.guild.id
+                                           )
+        role = discord.utils.get(member.guild.roles, name=res.get('auto_role'))
         channel = discord.utils.get(member.guild.channels, name="welcome")
         embed = discord.Embed(
             title="Member has joined the server!",
@@ -29,7 +32,6 @@ class Events(commands.Cog):
         )
         await channel.send(embed=embed)
         await member.add_roles(role)
-        self.bot.db.commit()
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
@@ -44,19 +46,28 @@ class Events(commands.Cog):
         else:
             l[str(guild.id)] -= 1
 
-        self.bot.db.execute(f"""INSERT INTO db(guild_id, prefix, auto_role)
-VALUES ({int(guild.id)}, +=, null)
-        """)
+        await self.bot.pool.execute(f"""INSERT INTO db(guild_id, prefix, auto_role)
+                                        VALUES ($1, $2, $3)""",
+                                    guild.id,
+                                    '+-',
+                                    'null'
+                                    )
         self.bot.db.commit()
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild):
-        self.bot.db.execute(f"""DELETE FROM db WHERE guild_id = {int(guild.id)}""")
-        self.bot.db.commit()
-        self.bot.db.execute(f"""DELETE FROM currency WHERE guild_id = {int(guild.id)}""")
-        self.bot.db.commit()
-        self.bot.db.execute(f"""DELETE FROM warns WHERE guild_id = {int(guild.id)}""")
-        self.bot.db.commit()
+        await self.bot.pool.execute(f"""DELETE FROM db
+                                        WHERE guild_id = $1""",
+                                    guild.id
+                                    )
+        await self.bot.pool.execute(f"""DELETE FROM currency
+                                        WHERE guild_id = $1""",
+                                    guild.id
+                                    )
+        await self.bot.pool.execute(f"""DELETE FROM warns
+                                        WHERE guild_id = $1""",
+                                    guild.id
+                                    )
 
 
 def setup(bot):

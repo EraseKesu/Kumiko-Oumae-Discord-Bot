@@ -25,9 +25,9 @@ class UserInfo(commands.Cog):
 
     @commands.command()
     async def user(self, ctx, *, user: discord.Member = None):
-      user = user or ctx.author
+        user = user or ctx.author
 
-      show_roles = ', '.join([
+        show_roles = ', '.join([
           f"<@&{x.id}>"
           for x in sorted(
               user.roles,
@@ -38,46 +38,53 @@ class UserInfo(commands.Cog):
           if x.id != ctx.guild.default_role.id
           ]) if len(user.roles) > 1 else 'None'
 
-      embed = discord.Embed(
-          colour=user.top_role.colour.value
+        embed = discord.Embed(
+            colour=user.top_role.colour.value
         )
-      embed.set_thumbnail(
-          url=user.avatar_url
+        embed.set_thumbnail(
+            url=user.avatar_url
         )
-      embed.add_field(
-          name="Full name",
-          value=user,
-          inline=True
+        embed.add_field(
+            name="Full name",
+            value=user,
+            inline=True
         )
-      embed.add_field(
-          name="Nickname",
-          value=user.nick if hasattr(user, "nick") else "None",
-          inline=True
+        embed.add_field(
+            name="Nickname",
+            value=user.nick if hasattr(user, "nick") else "None",
+            inline=True
         )
-      embed.add_field(
-          name="Account created",
-          value=utils.default.date(user.created_at),
-          inline=True
+        embed.add_field(
+            name="Account created",
+            value=utils.default.date(user.created_at),
+            inline=True
         )
-      embed.add_field(
-          name="Joined this server",
-          value=utils.default.date(user.joined_at),
-          inline=True
-        )
-
-      embed.add_field(
-          name="Roles", value=show_roles, inline=False
+        embed.add_field(
+            name="Joined this server",
+            value=utils.default.date(user.joined_at),
+            inline=True
         )
 
-      await ctx.send(
-          content=f"About **{user.id}**",
-          embed=embed
+        embed.add_field(
+            name="Roles", value=show_roles, inline=False
+        )
+
+        await ctx.send(
+            content=f"About **{user.id}**",
+            embed=embed
         )
 
     @commands.command()
-    async def avatar(self, ctx, *, user: discord.Member = None):
-        user = user or ctx.author
-        await ctx.send(f"Avatar to **{user.name}**\n{user.avatar_url_as(size=1024)}")
+    async def avatar(self, ctx, *, member: discord.Member = None):
+        member = member or ctx.author
+        embed = discord.Embed(
+            title=f"{member.name}'s avatar",
+            colour=0xED791D
+        )
+        embed.set_image(
+            url=member.avatar_url_as(size=1024)
+        )
+        await ctx.send(embed=embed)
 
 
 def setup(bot):

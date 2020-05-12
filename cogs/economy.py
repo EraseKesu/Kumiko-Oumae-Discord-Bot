@@ -52,15 +52,18 @@ class Economy(commands.Cog):
             )
             await ctx.send(embed=embed)
 """
-    def get_prefix(self, message):
-        with open("db_files/custom_prefix.json", "r") as f:
-            l = json.load(f)
 
-        try:
-            prefix = l[str(message.guild.id)]
-        except KeyError:
-            l[str(message.guild.id)] = '+-'
-            prefix = l[str(message.guild.id)]
+    async def get_prefix(self, bot, message):
+        res = await bot.pool.fetchrow("""SELECT prefix
+                                         FROM db
+                                         WHERE guild_id = $1""",
+                                      message.guild.id
+                                      )
+        if res is None:
+            prefix = commands.when_mentioned_or('+-')(bot, message)
+
+        if res is not None:
+            prefix = commands.when_mentioned_or(res.get("prefix"))(bot, message)
 
         return prefix
 
@@ -193,11 +196,11 @@ class Economy(commands.Cog):
                                      )
         if res is None:
             await ctx.send(
-                f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{self.get_prefix(ctx)}work` to start working!"
+                f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{await self.get_prefix(self.bot, ctx)}work` to start working!"
             )
             return
         if int(res.get('wit')) < 350:
-            await ctx.send(f"You do not have at least 350 on you! `{self.get_prefix(ctx)}withdraw`some money from your bank.")
+            await ctx.send(f"You do not have at least 350 on you! `{await self.get_prefix(self.bot, ctx)}withdraw`some money from your bank.")
             return
         if chance == "yes":
             money = random.randint(100, 400)
@@ -325,12 +328,12 @@ class Economy(commands.Cog):
                                            )
         if res is None:
             await ctx.send(
-                f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{self.get_prefix(ctx)}work` to start working!"
+                f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{await self.get_prefix(self.bot, ctx)}work` to start working!"
             )
             return
         if res.get('wit') < 350:
             await ctx.send(
-                f"You do not have at least 350 on you! `{self.get_prefix(ctx)}withdraw`some money from your bank.")
+                f"You do not have at least 350 on you! `{await self.get_prefix(self.bot, ctx)}withdraw`some money from your bank.")
             return
         if chance == "yes":
             money = random.randint(100, 400)
@@ -484,7 +487,7 @@ class Economy(commands.Cog):
 
     @commands.command(aliases=["bal"])
     async def balance(self, ctx):
-        get_pref = self.get_prefix(ctx)
+        get_pref = await self.get_prefix(self.bot, ctx)
         res = await self.bot.pool.fetchrow("""SELECT wit, dep, amount
                                               FROM currency 
                                               WHERE guild_id = $1
@@ -527,7 +530,7 @@ class Economy(commands.Cog):
 
     @commands.command(aliases=["with"])
     async def withdraw(self, ctx, amount):
-        get_pref = self.get_prefix(ctx)
+        get_pref = await self.get_prefix(self.bot, ctx)
         if amount == "":
             await ctx.send("Please specify an amount to withdraw!")
             return
@@ -625,7 +628,7 @@ class Economy(commands.Cog):
                                            )
         if res is None:
             await ctx.send(
-                f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{self.get_prefix(ctx)}work` to start working!"
+                f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{await self.get_prefix(self.bot, ctx)}work` to start working!"
             )
             return
         if res is not None:
@@ -708,13 +711,13 @@ class Economy(commands.Cog):
                                            )
         if res is None:
             await ctx.send(
-                f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{self.get_prefix(ctx)}work` to start working!"
+                f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{await self.get_prefix(self.bot, ctx)}work` to start working!"
             )
             return
         if res is not None:
             if res[0] < int(amount):
                 await ctx.send(
-                    f"Sorry, you do not have enough money on you! simply type in `{self.get_prefix(ctx)}withdraw {int(amount)}`"
+                    f"Sorry, you do not have enough money on you! simply type in `{await self.get_prefix(self.bot, ctx)}withdraw {int(amount)}`"
                 )
                 return
 
@@ -740,7 +743,7 @@ class Economy(commands.Cog):
                                            )
         if res is None:
             await ctx.send(
-                f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{self.get_prefix(ctx)}work` to start working!"
+                f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{await self.get_prefix(self.bot, ctx)}work` to start working!"
             )
             return
         if res is not None:
@@ -814,13 +817,13 @@ class Economy(commands.Cog):
                                                 )
                 if res is None:
                     await ctx.send(
-                        f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{self.get_prefix(ctx)}work` to start working!"
+                        f"Sorry, you do not have any money, in bank or on you! to get money, simply type `{await self.get_prefix(self.bot, ctx)}work` to start working!"
                     )
                     return
                 if res is not None:
                     if res.get("wit") < items[thing]:
                         await ctx.send(
-                            f"Sorry, you do not have enough money on you! simply type in `{self.get_prefix(ctx)}withdraw {items[thing]}`"
+                            f"Sorry, you do not have enough money on you! simply type in `{await self.get_prefix(self.bot, ctx)}withdraw {items[thing]}`"
                         )
                     wit = res.get('wit') - items[thing]
                     dep = res.get('dep')

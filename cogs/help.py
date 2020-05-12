@@ -46,15 +46,17 @@ class HelpSource(menus.ListPageSource):
             return embed
 
 
-def get_prefix(bot, message):
-    with open("db_files/custom_prefix.json", "r") as f:
-        l = json.load(f)
+async def get_prefix(bot, message):
+    res = await bot.pool.fetchrow("""SELECT prefix
+                                     FROM db
+                                     WHERE guild_id = $1""",
+                                  message.guild.id
+                                  )
+    if res is None:
+        prefix = commands.when_mentioned_or('+-')(bot, message)
 
-    try:
-        prefix = l[str(message.guild.id)]
-    except KeyError:
-        l[str(message.guild.id)] = '+-'
-        prefix = l[str(message.guild.id)]
+    if res is not None:
+        prefix = commands.when_mentioned_or(res.get("prefix"))(bot, message)
 
     return prefix
 
@@ -67,7 +69,7 @@ class Help(commands.Cog):
 
     @commands.command()
     async def help(self, ctx, command: str = None):
-        prefix = get_prefix(self.bot, ctx)
+        prefix = await get_prefix(self.bot, ctx)
         global CTX
         CTX = ctx
         error = f'```css\nThat command, "{command}", does not exist!\n```'
