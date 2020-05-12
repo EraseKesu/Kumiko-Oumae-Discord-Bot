@@ -47,7 +47,7 @@ class Music(commands.Cog):
 
         if not hasattr(bot, 'lavalink'):
             bot.lavalink = lavalink.Client(bot.user.id)
-            bot.lavalink.add_node('kumikooumaelavalink.herokuapp.com', 80, 'youshallnotpass', 'eu',
+            bot.lavalink.add_node('kumikooumaelavalink.herokuapp.com', 80, 'youshallnotpass', 'me',
                                   'default-node')
             bot.add_listener(bot.lavalink.voice_update_handler, 'on_socket_response')
 
