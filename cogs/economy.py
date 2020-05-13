@@ -186,9 +186,7 @@ class Economy(commands.Cog):
             fdescriptions = []
             for i in range(10):
                 try:
-
-                    res2[i] = str(res2[i].strip("<Record amount=>"))
-                    text = f"**{i}.** {self.bot.get_user(str(res[i]).strip('<Record user_id=>')} **{res2[i]}**"
+                    text = f"**{i}.** {self.bot.get_user(str(res[i]).strip('<Record user_id=>'))} **{str(res2[i].strip('<Record amount=>'))}**"
                     fdescriptions.append(text)
                 except IndexError:
                     break
