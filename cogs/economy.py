@@ -156,7 +156,6 @@ class Economy(commands.Cog):
         counter = 0
 
         for a in lb:
-            x += 1 if x != 0 else 0
             print(x)
             print(len(a))
             counter += 1
