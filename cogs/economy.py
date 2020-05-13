@@ -2,13 +2,35 @@ import discord
 import random
 import math
 from discord.ext.commands.cooldowns import BucketType
-from discord.ext import commands
+from discord.ext import commands, menus
 
 # Constants
 SUCCESSFUL_COLOUR = 0x2be31e
 UNSUCCESSFUL_COLOUR = 0xed2b15
 SUCCESS = "<:greenTick:596576670815879169>"
 UNSUCCESS = "<:redTick:596576672149667840>"
+
+
+class HelpSource(menus.ListPageSource):
+
+    async def format_page(self, menu, page):
+        url = "https://patreon.com/user?0=u&1=%3D&2=3&3=4&4=6&5=2&6=8&7=9&8=3&9=7&utm_medium=social&utm_source=twitter&utm_campaign=creatorshare"
+        if isinstance(page, str):
+            embed = discord.Embed(
+                title='Server Leaderboard',
+                description=f"[Join our support server](https://discord.gg/YUm2sBD) | [Support us on Patreon!]({url})" + ''.join(page),
+                color=0xED791D
+            )
+            return embed
+        else:
+
+            embed = discord.Embed(
+                title='Server Leaderboard',
+                description=f"[Join our support server](https://discord.gg/YUm2sBD) | [Support us on Patreon!]({url})" + '\n'.join(page),
+                color=0xED791D
+            )
+            return embed
+
 
 
 async def get_prefix(bot, message):
@@ -142,49 +164,38 @@ class Economy(commands.Cog):
 
     @commands.command(aliases=["leaderboard"])
     async def top(self, ctx):
-        lb = await self.bot.pool.fetch("""SELECT amount
-                                           FROM currency
-                                           WHERE guild_id = $1
-                                           ORDER BY amount DESC
-                                           LIMIT 10""",
-                                          ctx.guild.id
-                                          )
-        lb = sorted(lb, key=lambda x: lb[0], reverse=True)
-        res = ""
-        x = 0
+        res = await self.bot.pool.fetch("""SELECT user_id
+                                              FROM currency
+                                              WHERE guild_id = $1
+                                              ORDER BY amount DESC
+                                              LIMIT 10""",
+                                           ctx.guild.id
+                                           )
+        res2 = await self.bot.pool.fetch("""SELECT amount
+                                            FROM currency
+                                            WHERE guild_id = $1
+                                            ORDER BY amount DESC
+                                            LIMIT 10""",
+                                        ctx.guild.id
+                                        )
+        if res is None:
+            await ctx.send("No one on this server has been ranked yet!")
+            return
 
-        counter = 0
+        if res is not None:
+            fdescriptions = []
+            for i in range(10):
+                try:
+                    res[i] = str(res[i]).strip("<Record user_id=>")
+                    res2[i] = str(res2[i].strip("<Record amount=>"))
+                    text = f"**{i}.** {self.bot.get_user(res[i])} **{res2[i]}**"
+                    fdescriptions.append(text)
+                except IndexError:
+                    break
 
-        for a in lb:
-            print(x)
-            print(len(a))
-            counter += 1
-            print(counter)
-
-            if counter > 10:
-
-                pass
-
-            else:
-                res1 = await self.bot.pool.fetch("""SELECT user_id
-                                                    FROM currency
-                                                    WHERE guild_id = $1""",
-                                                    ctx.guild.id,
-                                                    )
-                u = self.bot.get_user(res1.get('user_id'))
-                lb[x] = str(lb[x]).strip("<Record amount=>")
-                res += f"\n**{counter}.** `{u}` - **{lb[x]} $**"
-                x += 1
-
-        embed = discord.Embed(
-            description=res,
-            colour=0x0EF7E2
-        )
-        embed.set_footer(
-            text="Join our support server! https://discord.gg/YUm2sBD",
-            icon_url=self.bot.user.avatar_url_as(static_format="png")
-        )
-        await ctx.send(embed=embed)
+        source = HelpSource(fdescriptions, per_page=2)
+        menu = menus.MenuPages(source)
+        await menu.start(ctx)
 
     @commands.command()
     @commands.cooldown(1, 3600, BucketType.user)
