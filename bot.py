@@ -20,7 +20,7 @@ import smtplib
 import asyncio
 import asyncpg
 from utils.db import Database
-from utils.webserver import keep_alive
+
 from discord.ext import commands
 import logging
 
@@ -201,5 +201,4 @@ try:
     loop.run_until_complete(run_bot())
 except KeyboardInterrupt:
     loop.run_until_complete(close_bot())
-keep_alive()
 bot.run(config.token)
