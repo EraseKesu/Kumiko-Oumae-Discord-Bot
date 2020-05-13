@@ -51,7 +51,7 @@ async def get_prefix(bot, message):
 class Economy(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-
+    """
     async def cog_command_error(self, ctx, error):
         if isinstance(error, commands.errors.CommandOnCooldown):
             embed = discord.Embed(
@@ -87,7 +87,7 @@ class Economy(commands.Cog):
                 inline=False
             )
             await ctx.send(embed=embed)
-
+"""
     @commands.command()
     @commands.cooldown(1, 3600, BucketType.user)
     async def work(self, ctx):
