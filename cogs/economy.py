@@ -173,6 +173,7 @@ class Economy(commands.Cog):
                                                     ctx.guild.id,
                                                     column=x)
                 u = self.bot.get_user(res1)
+                lb[x] = str(lb[x]).strip("<Record amount=>")
                 res += f"\n**{counter}.** `{u}` - **{lb[x]} $**"
                 x += 1
 
