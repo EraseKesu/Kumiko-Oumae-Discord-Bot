@@ -183,6 +183,7 @@ class Economy(commands.Cog):
             return
 
         if res is not None:
+            print(type(str(res[1])))
             fdescriptions = []
             for i in range(10):
                 try:
