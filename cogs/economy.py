@@ -171,7 +171,7 @@ class Economy(commands.Cog):
                                                        FROM currency
                                                        WHERE guild_id = $1""",
                                                     ctx.guild.id,
-                                                    column=len(x))
+                                                    column=x)
                 u = self.bot.get_user(res1)
                 res += f"\n**{counter}.** `{u}` - **{lb[x]} $**"
                 x += 1
