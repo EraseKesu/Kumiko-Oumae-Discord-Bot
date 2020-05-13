@@ -166,12 +166,12 @@ class Economy(commands.Cog):
                 pass
 
             else:
-                res1 = list(await self.bot.pool.fetch("""SELECT user_id
-                                                       FROM currency
-                                                       WHERE guild_id = $1""",
+                res1 = await self.bot.pool.fetch("""SELECT user_id
+                                                    FROM currency
+                                                    WHERE guild_id = $1""",
                                                     ctx.guild.id,
-                                                    ))
-                u = self.bot.get_user(res1[x])
+                                                    )
+                u = self.bot.get_user(res1.get('user_id'))
                 lb[x] = str(lb[x]).strip("<Record amount=>")
                 res += f"\n**{counter}.** `{u}` - **{lb[x]} $**"
                 x += 1
