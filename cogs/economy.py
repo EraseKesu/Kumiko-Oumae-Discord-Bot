@@ -178,8 +178,9 @@ class Economy(commands.Cog):
         if res is not None:
             fdescriptions = []
             for i in range(10):
-
                 try:
+                    res[i] = str(res[i]).strip("<Record user_id=>")
+                    res[i] = int(res[i])
                     res2 = await self.bot.pool.fetchrow("""SELECT amount
                                                            FROM currency
                                                            WHERE guild_id = $1
