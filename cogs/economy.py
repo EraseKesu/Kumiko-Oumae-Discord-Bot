@@ -188,9 +188,9 @@ class Economy(commands.Cog):
                 try:
                     res[i] = str(res[i]).strip("<Record user_id=>")
                     user = self.bot.get_user(int(res[i]))
-                    res2[i] = str(res2[1]).strip("Record amouunt=>")
+                    res2[i] = str(res2[1]).strip("<Record amount=>")
                     amount = res2[i]
-                    text = f"**{i}.** {user} **{amount}**"
+                    text = f"\n**{i + 1}.** {user} **{amount}**"
                     fdescriptions.append(text)
                 except IndexError:
                     break
