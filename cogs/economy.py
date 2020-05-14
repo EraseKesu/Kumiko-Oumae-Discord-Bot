@@ -183,11 +183,10 @@ class Economy(commands.Cog):
             return
 
         if res is not None:
-            print(type(str(res[1])))
             fdescriptions = []
             for i in range(10):
                 try:
-                    text = f"**{i}.** {self.bot.get_user(str(res[i]).strip('<Record user_id=>'))} **{str(res2[i].strip('<Record amount=>'))}**"
+                    text = f"**{i}.** {self.bot.get_user(res.get('user_id'))} **{str(res2.get('amount'))}**"
                     fdescriptions.append(text)
                 except IndexError:
                     break
