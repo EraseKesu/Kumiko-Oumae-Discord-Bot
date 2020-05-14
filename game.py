@@ -77,7 +77,7 @@ class Connect4Game:
     NO_WINNER = 0
 
     PIECES = (
-        ':white_large_square:'
+        '⬛'
         '\N{large red circle}'
         '\N{large blue circle}'
     )
