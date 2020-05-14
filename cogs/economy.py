@@ -165,19 +165,12 @@ class Economy(commands.Cog):
     @commands.command(aliases=["leaderboard"])
     async def top(self, ctx):
         res = await self.bot.pool.fetch("""SELECT user_id
-                                              FROM currency
-                                              WHERE guild_id = $1
-                                              ORDER BY amount DESC
-                                              LIMIT 10""",
-                                           ctx.guild.id
-                                           )
-        res2 = await self.bot.pool.fetch("""SELECT amount
                                             FROM currency
                                             WHERE guild_id = $1
                                             ORDER BY amount DESC
                                             LIMIT 10""",
-                                        ctx.guild.id
-                                        )
+                                           ctx.guild.id
+                                           )
         if res is None:
             await ctx.send("No one on this server has been ranked yet!")
             return
@@ -185,6 +178,15 @@ class Economy(commands.Cog):
         if res is not None:
             fdescriptions = []
             for i in range(10):
+                res2 = await self.bot.pool.fetch("""SELECT amount
+                                                    FROM currency
+                                                    WHERE guild_id = $1
+                                                    AND user_id = $2
+                                                    ORDER BY amount DESC
+                                                    LIMIT 10""",
+                                                 ctx.guild.id,
+                                                 res[i]
+                                                 )
                 try:
                     res[i] = str(res[i]).strip("<Record user_id=>")
                     user = self.bot.get_user(int(res[i]))
