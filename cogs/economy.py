@@ -178,6 +178,7 @@ class Economy(commands.Cog):
         if res is not None:
             fdescriptions = []
             for i in range(10):
+
                 try:
                     res2 = await self.bot.pool.fetchrow("""SELECT amount
                                                            FROM currency
