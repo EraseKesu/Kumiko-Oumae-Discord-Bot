@@ -12,6 +12,14 @@ class Leveling(commands.Cog):
     @commands.Cog.listener()
     @commands.cooldown(1, 10, BucketType.user)
     async def on_message(self, message):
+        with open("db_files/prime.json", "r") as f:
+            l = json.load(f)
+
+        try:
+            print(l[str(message.guild.id)])
+        except KeyError:
+            return
+
         with open("db_files/enable.json", "r") as f:
             l = json.load(f)
         try:
@@ -70,6 +78,15 @@ class Leveling(commands.Cog):
 
     @commands.command()
     async def rank(self, ctx, member: discord.Member = None):
+        with open("db_files/prime.json", "r") as f:
+            l = json.load(f)
+
+        try:
+            print(l[str(ctx.guild.id)])
+        except KeyError:
+            await ctx.send("Sorry, this a **prime only** command!")
+            return
+
         if member is None:
             member = ctx.author
         res = await self.bot.pool.fetchrow("""SELECT exp, lvl
@@ -110,6 +127,15 @@ class Leveling(commands.Cog):
     @commands.command()
     @checks.is_mod()
     async def enable(self, ctx):
+        with open("db_files/prime.json", "r") as f:
+            l = json.load(f)
+
+        try:
+            print(l[str(ctx.guild.id)])
+        except KeyError:
+            await ctx.send("Sorry, this a **prime only** command!")
+            return
+
         with open("db_files/enable.json", "r") as f:
             l = json.load(f)
 
@@ -123,6 +149,15 @@ class Leveling(commands.Cog):
     @commands.command()
     @checks.is_mod()
     async def disable(self, ctx):
+        with open("db_files/prime.json", "r") as f:
+            l = json.load(f)
+
+        try:
+            print(l[str(ctx.guild.id)])
+        except KeyError:
+            await ctx.send("Sorry, this a **prime only** command!")
+            return
+
         with open("db_files/enable.json", "r") as f:
             l = json.load(f)
 

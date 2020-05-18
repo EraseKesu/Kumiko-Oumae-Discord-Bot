@@ -13,7 +13,6 @@ parsedatetime
 matplotlib
 pillow
 mtranslate
-PyNaCl
 flask
 datetime
 lavalink==3.0.0

@@ -335,10 +335,9 @@ class Help(commands.Cog):
 
     @commands.command(aliases=["about"])
     async def info(self, ctx):
-        owner = self.bot.get_user(self.bot.owner_id)
         embed = discord.Embed(
             title="About",
-            description=f"I was made by {owner}.",
+            description=f"I was made by {self.bot.__author__}.",
             colour=0xED791D
         )
         embed.add_field(
@@ -348,7 +347,7 @@ class Help(commands.Cog):
         )
         embed.add_field(
             name="Bot Version:",
-            value="version 1.1",
+            value=self.bot.__version__,
             inline=True
         )
         embed.add_field(

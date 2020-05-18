@@ -88,6 +88,8 @@ class MyContext(commands.Context):
 class MyBot(commands.Bot):
     def __init__(self):
         super().__init__(command_prefix=get_prefix)
+        self.__version__ = '0.9'
+        self.__author__ = self.get_user(self.owner_id)
 
     async def _init(self):
         pool = await Database.connect()
